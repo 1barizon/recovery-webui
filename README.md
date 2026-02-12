@@ -1,98 +1,205 @@
-# MapFlask
+# Recovery WebUI
 
-Projeto simples para visualização em tempo real de telemetria em um mapa usando Flask + Socket.IO.
+Sistema de rastreamento e recuperação em tempo real para foguetes experimentais, desenvolvido para monitorar telemetria via comunicação serial LoRa e visualizar dados em interface web.
 
-## Visão geral
+## 📋 Visão Geral
 
-Este subprojeto (pasta `MapFlask`) abre uma aplicação web que recebe dados via porta serial e os transmite para clientes conectados via WebSocket (Flask-SocketIO). Os dados são exibidos em um mapa (Leaflet) e em uma tabela HTML.
+O Recovery WebUI é uma aplicação Flask que fornece uma interface web para monitoramento em tempo real de foguetes experimentais. O sistema recebe dados de telemetria via comunicação serial (tipicamente através de módulos LoRa), processa as informações e as exibe em um mapa interativo, permitindo o rastreamento da posição, altitude, e outros parâmetros importantes durante o voo.
 
-O servidor principal está em `app/app.py`. O frontend principal de mapas e tabela está em `app/static/js/app.js`.
+### Funcionalidades Principais
 
-## Dependências
+- 🗺️ **Visualização em Mapa Interativo**: Mapa com múltiplas camadas (Google Satélite, Google Streets, OpenStreetMap)
+- 📡 **Rastreamento em Tempo Real**: Comunicação via WebSocket para atualizações instantâneas
+- 📊 **Registro de Dados**: Armazenamento automático de telemetria em formato CSV
+- 🚀 **Suporte Dual**: Rastreamento simultâneo de foguete (#100) e satélite (#261)
+- 📈 **Histórico de Voo**: Tabelas com histórico completo de dados recebidos
+- 🔌 **Comunicação Serial**: Integração com dispositivos via porta serial (LoRa)
 
-- Python 3.8+
-- Flask
-- Flask-SocketIO
-- pyserial (para comunicação serial)
+### Dados Monitorados
 
-Você pode instalar as dependências rapidamente com:
+#### Foguete (TEAM_ID #100)
+
+- Posição GPS (latitude, longitude)
+- Altitude barométrica
+- Número de satélites GPS
+- Status do paraquedas
+- RSSI (intensidade do sinal)
+
+#### Satélite (TEAM_ID #261)
+
+- Posição GPS (latitude, longitude)
+- Altitude
+- Temperatura
+- Umidade relativa
+- Pressão atmosférica
+- Número de satélites GPS
+- RSSI (intensidade do sinal)
+
+## 🚀 Início Rápido
+
+### Pré-requisitos
+
+- Python 3.7 ou superior
+- Porta serial disponível (para comunicação com o módulo LoRa)
+- Navegador web moderno
+
+### Instalação
+
+1. Clone o repositório:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+git clone <url-do-repositorio>
+cd recovery-webui
+```
+
+2. Instale as dependências:
+
+```bash
 pip install -r requirements.txt
 ```
 
-## Como rodar
+### Uso
 
-1. Conecte o dispositivo serial (ou garanta que exista uma porta serial virtual para teste).
-2. Entre na pasta `MapFlask`:
+1. Conecte o módulo LoRa receptor ao computador via USB
 
-```bash
-cd MapFlask
-```
-
-3. Execute a aplicação:
+2. Execute a aplicação:
 
 ```bash
-python3 app/app.py
+cd app
+python app.py
 ```
 
-Ao iniciar, o programa lista as portas seriais disponíveis e pede que você selecione uma. O servidor web abre automaticamente o navegador em `http://localhost:5000` (porta padrão configurada em `app/app.py`).
+3. Selecione a porta serial quando solicitado:
 
-## Arquivos importantes
+```
+Portas seriais disponíveis:
+1: /dev/ttyACM0
+2: /dev/ttyUSB0
+Selecione a porta serial (número): 1
+```
 
-- `app/app.py` - servidor Flask + Socket.IO e thread de leitura da porta serial.
-- `app/static/js/app.js` - javascript do frontend que processa eventos Socket.IO e atualiza mapa e tabela.
-- `app/templates/index.html` - página principal (template HTML com mapa e tabela) — caso não exista, crie-a com elementos esperados (`mapDIV`, `table`, etc.).
-- `module.py` - módulo local (importado em `app.py`) que contém funções de comunicação serial (`base_com`, `list_ports`, `com.read_response`, etc.).
+4. O navegador abrirá automaticamente em `http://localhost:5000`
 
-## Eventos WebSocket
+5. Acesse as diferentes visualizações:
+   - `/` - Dados do foguete principal
+   - `/satellite` - Dados do satélite
 
-O backend emite, entre outros, os seguintes eventos:
+## 📁 Estrutura do Projeto
 
-- `updateRocket` - dados do foguete (ex.: latitude/longitude/altitude/satellites/rssi/pqd/time). O arquivo `app/static/js/app.js` já implementa o listener para esse evento e atualiza o mapa e a tabela.
-- `updateSat` - dados do satélite/busca (ex.: latitude/longitude/altitude/temperatura/umidade/pressao/rssi/pqd/time).
+```
+recovery-webui/
+├── app/
+│   ├── app.py              # Aplicação Flask principal
+│   ├── module/
+│   │   ├── __init__.py
+│   │   └── SerialCOM.py    # Módulo de comunicação serial
+│   ├── static/
+│   │   ├── css/            # Estilos
+│   │   └── js/
+│   │       └── app.js      # Lógica do cliente (WebSocket, mapa)
+│   ├── templates/
+│   │   ├── base.html       # Template base
+│   │   ├── index.html      # Página do foguete
+│   │   └── satellite.html  # Página do satélite
+│   └── logs/
+│       └── log.csv         # Logs de telemetria
+├── requirements.txt        # Dependências Python
+└── README.md              # Este arquivo
+```
 
-IMPORTANTE: atualmente o frontend implementa apenas a rotina para `updateRocket` (ver `app/static/js/app.js`). Será necessário criar a rotina JavaScript e os elementos HTML correspondentes para tratar e exibir os dados do satélite emitidos no evento `updateSat`.
+## 🛠️ Tecnologias Utilizadas
 
-Sugestões mínimas para implementar a rotina do satélite:
+### Backend
 
-- No HTML: criar uma tabela ou área de informações separada (por exemplo `#satTable`) para mostrar latitude, longitude, altura, temperatura, umidade, pressão e RSSI.
-- No JS (`app/static/js/app.js`): adicionar um `socket.on('updateSat', function(msg) { ... })` que faça parsing dos campos recebidos e atualize o DOM e o mapa (por exemplo, adicionando markers numa layer separada ou reutilizando `layerGroup`).
+- **Flask** - Framework web Python
+- **Flask-SocketIO** - Comunicação WebSocket em tempo real
+- **PySerial** - Comunicação serial com hardware
 
-## Logs
+### Frontend
 
-O `app/app.py` grava os pacotes recebidos em `MapFlask/log.csv` para posterior análise. Cada linha contém os campos brutos recebidos e um timestamp.
+- **Leaflet.js** - Biblioteca de mapas interativos
+- **Socket.IO** - Cliente WebSocket
+- **jQuery** - Manipulação do DOM
+- **Font Awesome** - Ícones
 
-## Desenvolvimento e testes
+## 📡 Protocolo de Comunicação
 
-- Para testar sem hardware, pode simular a saída serial criando um pequeno script que emite linhas no mesmo formato esperado e conectando-o em uma porta serial virtual (são várias ferramentas para isso no Linux, ex.: `socat` ou `tty0tty`).
+O sistema espera dados no seguinte formato CSV via serial:
 
-## String esperada
+```
+TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi
+```
 
-`TEAM_ID,millis,count,hora,data,alt,lat,lon,sat,altp,temp,p,gp,gr,gy,ap,ar,ay,pqd,rssi` ou alguma mensagem específica. No caso do primeiro tipo:
+Onde:
 
-### Explicação das variáveis
+- `TEAM_ID`: Identificador do dispositivo (#100 para foguete, #261 para satélite)
+- `millis`: Tempo em milissegundos desde o boot
+- `count`: Contador de pacotes
+- `altp`: Altitude barométrica
+- `temp`: Temperatura (°C)
+- `umi`: Umidade relativa (%)
+- `p`: Pressão atmosférica (hPa)
+- `gp`, `gr`, `gy`: Dados do giroscópio (pitch, roll, yaw)
+- `ap`, `ar`, `ay`: Dados do acelerômetro (x, y, z)
+- `hora`, `data`: Hora e data do GPS
+- `alt`: Altitude GPS (m)
+- `lat`, `lon`: Coordenadas GPS
+- `sat`: Número de satélites GPS
+- `pqd`: Status do paraquedas (0 ou 1)
+- `rssi`: Intensidade do sinal LoRa
 
-- TEAM_ID — identificador da equipe/dispositivo (string).
-- millis — timestamp em milissegundos (normalmente desde a inicialização do equipamento).
-- count — contador sequencial de pacotes recebidos (inteiro).
-- hora — hora da leitura (formato típico HH:MM:SS, string).
-- data — data da leitura (formato típico YYYY-MM-DD ou DD/MM/YYYY, string).
-- alt — altitude GPS em metros (float).
-- lat — latitude em graus decimais (float, ex.: -23.5505).
-- lon — longitude em graus decimais (float).
-- sat — número de satélites usados no GPS (inteiro).
-- altp — altitude por barômetro (altitude barométrica) em metros — pode diferir de `alt` (float).
-- temp — temperatura em °C (float).
-- umi — umidade relativa em % (float).
-- p — pressão atmosférica em atm (float).
-- gp — leitura do giroscópio eixo “pitch” (deg/s; float).
-- gr — leitura do giroscópio eixo “roll” (deg/s; float).
-- gy — leitura do giroscópio eixo “yaw” (deg/s; float).
-- ap — leitura do acelerômetro eixo “pitch” (m/s² ou g; float).
-- ar — leitura do acelerômetro eixo “roll” (m/s² ou g; float).
-- ay — leitura do acelerômetro eixo “yaw” (m/s² ou g; float).
-- pqd — indicador de abertura do paraquedas (bool).
-- rssi — intensidade do sinal recebido (RSSI).
+## 📚 Documentação Adicional
+
+Para informações mais detalhadas, consulte a pasta `docs/`:
+
+- [Guia de Instalação](docs/installation.md) - Instalação detalhada e configuração
+- [Arquitetura do Sistema](docs/architecture.md) - Detalhes técnicos da arquitetura
+- [Documentação da API](docs/api.md) - Endpoints e eventos WebSocket
+- [Guia de Desenvolvimento](docs/development.md) - Contribuindo para o projeto
+
+## 🐛 Solução de Problemas
+
+### Porta serial não encontrada
+
+- Verifique se o dispositivo está conectado
+- Em Linux, você pode precisar de permissões: `sudo usermod -a -G dialout $USER`
+- Verifique se o driver CH340/CP2102 está instalado (dependendo do módulo)
+
+### Dados não aparecem no mapa
+
+- Verifique se o formato dos dados serial está correto
+- Confira o console do navegador (F12) para erros JavaScript
+- Verifique os logs do servidor no terminal
+
+### Navegador não abre automaticamente
+
+- Abra manualmente: `http://localhost:5000`
+- Verifique se a porta 5000 não está em uso
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Por favor:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)
+3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
+4. Push para a branch (`git push origin feature/MinhaFeature`)
+5. Abra um Pull Request
+
+Leia nosso [Guia de Contribuição](CONTRIBUTING.md) para mais detalhes sobre padrões de código, processo de desenvolvimento e como reportar bugs.
+
+## 📝 Licença
+
+Este projeto é open source e está disponível para uso educacional e experimental.
+
+## 🔗 Projetos Relacionados
+
+- [flight-computer](../flight-computer) - Firmware do computador de bordo do foguete
+
+## 📧 Contato
+
+Para dúvidas ou sugestões, abra uma issue no repositório.
+
+---
+
+Desenvolvido para competições e experimentos de foguetemodelismo 🚀
