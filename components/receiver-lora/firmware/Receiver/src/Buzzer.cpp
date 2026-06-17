@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "buzzer.h"
+#include "Buzzer.h"
 #include "config.h"
 
 void buzzerInit() {
