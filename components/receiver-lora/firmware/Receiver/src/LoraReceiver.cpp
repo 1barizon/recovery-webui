@@ -1,6 +1,6 @@
 #include <SPI.h>
 #include <LoRa.h>
-#include "lora.h"
+#include "LoraReceiver.h"
 #include "config.h"
 
 bool loraInit() {
