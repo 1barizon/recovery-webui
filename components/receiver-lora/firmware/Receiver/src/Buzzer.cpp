@@ -1,52 +1,22 @@
-#include "Buzzer.h"
-#include "Config.h"
+#include <Arduino.h>
+#include "buzzer.h"
+#include "config.h"
 
-/* BUZZER MODULE - START */
-
-void setupBuzzer()
-{
-  pinMode(BUZZER_PIN, OUTPUT);
+void buzzerInit() {
+    pinMode(BUZZER_PIN, OUTPUT);
+    digitalWrite(BUZZER_PIN, LOW);
 }
 
-/**
- * Generate audio signals using the buzzer for status indication
- * @param signal Signal type: "Alert" (error), "Success" (initialized),
- *               "Activated" (parachute deployed), "Beep" (standard)
- */
-void buzzSignal(String signal)
-{
-  int frequency = 500;
-  if (signal == "Alert") // Error signal during initialization
-  {
-    for (int i = 0; i < 5; i++)
-    {
-      tone(BUZZER_PIN, frequency, 200);
-      delay(200 + 150);
+void beep(int freq, int durationMs, int times) {
+    for (int i = 0; i < times; i++) {
+        tone(BUZZER_PIN, freq, durationMs);
+        delay(durationMs + 50);
     }
-  }
-  else if (signal == "Success") // Success signal on initialization
-  {
-    for (int i = 0; i < 3; i++)
-    {
-      tone(BUZZER_PIN, frequency, 100);
-      delay(100 + 100);
-    }
-  }
-  else if (signal == "Activated") // Parachute deployed — distinctive tone on GS
-  {
-    tone(BUZZER_PIN, 1200, 500);
-    delay(600);
-    tone(BUZZER_PIN, 800, 300);
-  }
-  else if (signal == "Beep") // Standard operation beep
-  {
-    tone(BUZZER_PIN, frequency, 50);
-    delay(100);
-  }
-  else
-  {
-    Serial.println("Invalid signal!");
-  }
+    noTone(BUZZER_PIN);
 }
 
-/* BUZZER MODULE - END */
+void beepBoot()      { beep(1000, 100, 2); }
+void beepLoraOK()    { beep(2000, 300, 1); }
+void beepLoraError() { beep(400,  600, 3); }
+void beepGpsFix()    { beep(1500, 150, 3); }
+void beepTx()        { beep(2500,  40, 1); }
