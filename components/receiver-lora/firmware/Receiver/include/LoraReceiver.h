@@ -1,10 +1,6 @@
 #pragma once
 #include <Arduino.h>
 
-/* ================================================================
-   LORA RECEIVER MODULE
-   Recepção contínua de pacotes dos dispositivos #100 e #261.
-   ================================================================ */
-
-bool setupLoRa();
-void handleLoRaPacket();
+bool loraInit();                      // Retorna true se OK
+bool loraSend(const String& payload); // Retorna true se enviou
+int  loraLastRSSI();                  // RSSI do último pacote recebido
