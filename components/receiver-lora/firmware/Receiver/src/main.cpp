@@ -1,64 +1,51 @@
-// Library includes
-#include <Wire.h>
-#include <SPI.h>
-#include <TinyGPS++.h>
-#include <LoRa.h>
+#include <Arduino.h>
+#include "config.h"
+#include "buzzer.h"
+#include "gps.h"
+#include "lora.h"
+#include "payload.h"
 
-// Ground station modules
-#include "Config.h"
-#include "Buzzer.h"
-#include "LoraReceiver.h"
-#include "GpsModule.h"
+static uint32_t packetCount = 0;
+static uint32_t lastTxMs   = 0;
+static bool     loraReady  = false;
+static bool     gpsFixSeen = false;
 
-unsigned long previous_gps_millis = 0;
+void setup() {
+    Serial.begin(115200);
+    delay(400);
+    Serial.println("\n=== GPS Tracker LoRa — modular ===");
 
-void setup()
-{
-  Serial.begin(SERIAL_BAUD);
-  Wire.begin();
+    buzzerInit();
+    beepBoot();
 
-  setupBuzzer();
+    gpsInit();
 
-  // Aguarda estabilização (espelha o comportamento do foguete)
-  for (int i = 0; i < 5; i++)
-  {
-    Serial.println("Initializing...");
-    delay(1000);
-  }
-
-  // GPS em Serial1 com espera de 3s (igual ao foguete)
-  setupGPS();
-
-  // LoRa em modo recepção contínua
-  if (!setupLoRa())
-  {
-    Serial.println("Module configuration error!");
-    buzzSignal("Alert");
-    delay(3000);
-  }
-  else
-  {
-    Serial.println("All modules initialized successfully!");
-    buzzSignal("Success");
-  }
-
-  // Cabeçalho CSV para o WebUI identificar as colunas
-  Serial.println("RSSI,SNR,TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lon,sat,pqd");
+    loraReady = loraInit();
+    if (loraReady) beepLoraOK();
+    else           beepLoraError();
 }
 
-void loop()
-{
-  // Lê GPS continuamente
-  readGPS();
+void loop() {
+    // 1. Alimenta o parser GPS com bytes da UART
+    gpsProcess();
 
-  // Processa pacotes LoRa disponíveis
-  handleLoRaPacket();
+    // 2. Detecta primeiro fix
+    if (!gpsFixSeen && gpsHasFix()) {
+        gpsFixSeen = true;
+        Serial.println("[GPS] Fix obtido!");
+        beepGpsFix();
+    }
 
-  // Emite posição da ground station a cada GPS_EMIT_INTERVAL ms
-  unsigned long now = millis();
-  if (now - previous_gps_millis >= GPS_EMIT_INTERVAL)
-  {
-    emitGPSLine();
-    previous_gps_millis = now;
-  }
+    // 3. Transmissão periódica
+    if (loraReady && (millis() - lastTxMs >= TX_INTERVAL_MS)) {
+        lastTxMs = millis();
+        packetCount++;
+
+        GpsData data    = gpsGetData();
+        String  payload = buildPayload(packetCount, data);
+
+        if (loraSend(payload)) {
+            beepTx();
+        }
+    }
 }
