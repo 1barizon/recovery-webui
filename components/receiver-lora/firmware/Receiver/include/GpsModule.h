@@ -1,11 +1,16 @@
 #pragma once
-#include <Arduino.h>
+#include <TinyGPS++.h>
+ 
+struct GpsData {
+    double   lat;
+    double   lon;
+    double   altMeters;
+    double   speedKmph;
+    uint32_t satellites;
+    bool     valid;
+};
 
-/* ================================================================
-   GPS MODULE — NEO-N8M
-   Backup de localização da ground station via Serial1.
-   ================================================================ */
-
-void setupGPS();
-void readGPS();
-void emitGPSLine();
+void       gpsInit();
+void       gpsProcess();      // Chamar a cada loop()
+bool       gpsHasFix();
+GpsData    gpsGetData();
