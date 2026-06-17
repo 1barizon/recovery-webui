@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include "config.h"
-#include "buzzer.h"
-#include "gps.h"
-#include "lora.h"
+#include "Buzzer.h"
+#include "GpsModule.h"
+#include "LoraReceiver.h"
 #include "payload.h"
 
 static uint32_t packetCount = 0;
