@@ -1,79 +1,34 @@
-#include "GpsModule.h"
-#include "Config.h"
+#include <Arduino.h>
 #include <TinyGPS++.h>
+#include "GpsModule.h"
+#include "config.h"
 
-/* GPS MODULE - START */
+static TinyGPSPlus  _gps;
+static HardwareSerial _serial(1);   // UART1
+static bool _hadFix = false;
 
-TinyGPSPlus GPS;
+void gpsInit() {
+    _serial.begin(GPS_BAUD, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+    Serial.println("[GPS] UART1 iniciada");
+}
 
-/**
- * Initialize GPS serial port and wait 3 seconds for first data
- * Mirrors the GPS initialization from the rocket firmware v2
- */
-void setupGPS()
-{
-  Serial1.begin(9600, SERIAL_8N1, RX_GPS, TX_GPS);
-
-  unsigned long start = millis();
-  while (millis() - start < 3000)
-  {
-    while (Serial1.available() > 0)
-    {
-      GPS.encode(Serial1.read());
+void gpsProcess() {
+    while (_serial.available() > 0) {
+        _gps.encode(_serial.read());
     }
-  }
 }
 
-/**
- * Read available bytes from GPS and feed TinyGPS++ parser
- * Must be called every loop() iteration
- */
-void readGPS()
-{
-  while (Serial1.available() > 0)
-  {
-    GPS.encode(Serial1.read());
-  }
+bool gpsHasFix() {
+    return _gps.location.isValid();
 }
 
-/**
- * Collect and emit ground station position on Serial USB
- * Format: GS_GPS,hora,data,lat,lon,alt,sat
- * Mirrors GPSData() format from rocket firmware v2
- */
-void emitGPSLine()
-{
-  String time_data = "nan";
-  if (GPS.time.isValid())
-  {
-    char buf[16];
-    sprintf(buf, "%02d:%02d:%02d", GPS.time.hour(), GPS.time.minute(), GPS.time.second());
-    time_data = String(buf);
-  }
-
-  String date_data = "nan";
-  if (GPS.date.isValid())
-  {
-    char buf[16];
-    sprintf(buf, "%04d/%02d/%02d", GPS.date.year(), GPS.date.month(), GPS.date.day());
-    date_data = String(buf);
-  }
-
-  String lat  = "nan";
-  String lon  = "nan";
-  String alt  = "nan";
-  String sats = "0";
-
-  if (GPS.location.isValid())
-  {
-    lat  = String(GPS.location.lat(), 8);
-    lon  = String(GPS.location.lng(), 8);
-    alt  = String(GPS.altitude.meters(), 2);
-    sats = String(GPS.satellites.value());
-  }
-
-  Serial.println("GS_GPS," + time_data + "," + date_data + "," +
-                 lat + "," + lon + "," + alt + "," + sats);
+GpsData gpsGetData() {
+    GpsData d;
+    d.valid      = _gps.location.isValid();
+    d.lat        = d.valid ? _gps.location.lat()      : 0.0;
+    d.lon        = d.valid ? _gps.location.lng()      : 0.0;
+    d.altMeters  = _gps.altitude.isValid()  ? _gps.altitude.meters()  : 0.0;
+    d.speedKmph  = _gps.speed.isValid()     ? _gps.speed.kmph()       : 0.0;
+    d.satellites = _gps.satellites.isValid()? _gps.satellites.value() : 0;
+    return d;
 }
-
-/* GPS MODULE - END */
