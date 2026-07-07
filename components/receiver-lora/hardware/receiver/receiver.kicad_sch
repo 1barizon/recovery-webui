@@ -191,24 +191,26 @@
 			(on_board yes)
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "U2"
-				(at 0 38.1 0)
+			(property "Reference" "U"
+				(at -17.78 35.56 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left top)
 				)
 			)
 			(property "Value" "ESP32-S3-DEVKITC-1-N8R8"
-				(at 0 35.56 0)
+				(at -17.78 -27.94 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left bottom)
 				)
 			)
 			(property "Footprint" "ESP32-S3-DEVKITC-1-N8R8:ESP32-S3-DEVKITC-1-N8R8"
@@ -344,8 +346,8 @@
 			)
 			(symbol "ESP32-S3-DEVKITC-1-N8R8_0_0"
 				(rectangle
-					(start -17.78 33.02)
-					(end 17.78 -25.4)
+					(start -17.78 -25.4)
+					(end 17.78 33.02)
 					(stroke
 						(width 0.254)
 						(type default)
@@ -365,24 +367,6 @@
 						)
 					)
 					(number "J1_1"
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at -22.86 27.94 0)
-					(length 5.08)
-					(name "3V3."
-						(effects
-							(font
-								(size 1.016 1.016)
-							)
-						)
-					)
-					(number "J1_2"
 						(effects
 							(font
 								(size 1.016 1.016)
@@ -1095,9 +1079,27 @@
 			)
 			(symbol "ESP32-S3-DEVKITC-1-N8R8_1_0"
 				(pin power_in line
+					(at -22.86 27.94 0)
+					(length 5.08)
+					(name "3V3"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+					(number "J1_2"
+						(effects
+							(font
+								(size 1.016 1.016)
+							)
+						)
+					)
+				)
+				(pin power_in line
 					(at -22.86 -22.86 0)
 					(length 5.08)
-					(name "GND3"
+					(name "GND"
 						(effects
 							(font
 								(size 1.016 1.016)
@@ -1111,12 +1113,11 @@
 							)
 						)
 					)
-					(alternate "GND" power_in line)
 				)
 				(pin power_in line
 					(at 22.86 -20.32 180)
 					(length 5.08)
-					(name "GND1"
+					(name "GND"
 						(effects
 							(font
 								(size 1.016 1.016)
@@ -1130,12 +1131,11 @@
 							)
 						)
 					)
-					(alternate "GND" power_in line)
 				)
 				(pin power_in line
 					(at 22.86 -22.86 180)
 					(length 5.08)
-					(name "GND2"
+					(name "GND"
 						(effects
 							(font
 								(size 1.016 1.016)
@@ -1149,7 +1149,6 @@
 							)
 						)
 					)
-					(alternate "GND" power_in line)
 				)
 			)
 			(embedded_fonts no)
@@ -1942,18 +1941,6 @@
 		(color 0 0 0 0)
 		(uuid "c46daeee-03f6-4d28-8ad1-d2bda8715c3a")
 	)
-	(junction
-		(at 198.12 97.79)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "ed0a4c82-6474-46f3-a918-4aad05fe6d62")
-	)
-	(junction
-		(at 210.82 97.79)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "fc67e1f0-771b-4c59-81b0-c4ef558b339f")
-	)
 	(wire
 		(pts
 			(xy 138.43 29.21) (xy 198.12 29.21)
@@ -1963,6 +1950,16 @@
 			(type default)
 		)
 		(uuid "0052e484-bb9b-4422-80b9-a7ed8f0ede6b")
+	)
+	(wire
+		(pts
+			(xy 69.85 107.95) (xy 81.28 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "024b7001-e4fb-4c98-8007-11df7468422c")
 	)
 	(wire
 		(pts
@@ -1976,6 +1973,16 @@
 	)
 	(wire
 		(pts
+			(xy 128.27 87.63) (xy 152.4 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0b973dce-3a87-4d05-b047-6310fb1f8711")
+	)
+	(wire
+		(pts
 			(xy 104.14 49.53) (xy 148.59 49.53)
 		)
 		(stroke
@@ -1983,16 +1990,6 @@
 			(type default)
 		)
 		(uuid "11dee630-036b-479b-8793-ad6872baa0aa")
-	)
-	(wire
-		(pts
-			(xy 152.4 97.79) (xy 198.12 97.79)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "12f3e58b-e3cc-4846-88df-041047078de9")
 	)
 	(wire
 		(pts
@@ -2046,6 +2043,16 @@
 	)
 	(wire
 		(pts
+			(xy 69.85 115.57) (xy 81.28 115.57)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3daeb4dc-8d04-4eca-90b5-95b44bfd72bf")
+	)
+	(wire
+		(pts
 			(xy 144.78 52.07) (xy 144.78 67.31)
 		)
 		(stroke
@@ -2066,16 +2073,6 @@
 	)
 	(wire
 		(pts
-			(xy 198.12 95.25) (xy 198.12 97.79)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "53ad36fd-775f-40d3-8f55-196a72cbf049")
-	)
-	(wire
-		(pts
 			(xy 104.14 44.45) (xy 142.24 44.45)
 		)
 		(stroke
@@ -2086,7 +2083,27 @@
 	)
 	(wire
 		(pts
-			(xy 146.05 78.74) (xy 146.05 44.45)
+			(xy 128.27 90.17) (xy 152.4 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "566c6b66-712b-420d-854e-e9bba21667dc")
+	)
+	(wire
+		(pts
+			(xy 128.27 82.55) (xy 152.4 82.55)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6121f687-ee5d-46f6-b572-a3ae5d3e568c")
+	)
+	(wire
+		(pts
+			(xy 146.05 76.2) (xy 146.05 44.45)
 		)
 		(stroke
 			(width 0)
@@ -2126,13 +2143,23 @@
 	)
 	(wire
 		(pts
-			(xy 210.82 97.79) (xy 210.82 125.73)
+			(xy 69.85 102.87) (xy 81.28 102.87)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "809842b7-db96-42a8-b55b-3e7f2080a79b")
+		(uuid "79cf62ac-060e-46d7-ae7b-1946e0971094")
+	)
+	(wire
+		(pts
+			(xy 69.85 105.41) (xy 81.28 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7b0bccfc-8308-4248-ad95-950aa2afc636")
 	)
 	(wire
 		(pts
@@ -2146,6 +2173,26 @@
 	)
 	(wire
 		(pts
+			(xy 128.27 85.09) (xy 152.4 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "93bc6e2a-02f7-4f65-ab72-adbc0ea8d5c0")
+	)
+	(wire
+		(pts
+			(xy 128.27 80.01) (xy 152.4 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b1bf6dfd-b304-4d0e-9f8a-5c6c2688ac8c")
+	)
+	(wire
+		(pts
 			(xy 104.14 57.15) (xy 138.43 57.15)
 		)
 		(stroke
@@ -2153,16 +2200,6 @@
 			(type default)
 		)
 		(uuid "b21e4f30-31a1-4404-906b-dfb3f1df0e29")
-	)
-	(wire
-		(pts
-			(xy 198.12 97.79) (xy 210.82 97.79)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b2372d70-31f8-491b-82a8-f49a8446b1c7")
 	)
 	(wire
 		(pts
@@ -2176,7 +2213,7 @@
 	)
 	(wire
 		(pts
-			(xy 210.82 44.45) (xy 210.82 97.79)
+			(xy 210.82 44.45) (xy 210.82 125.73)
 		)
 		(stroke
 			(width 0)
@@ -2196,7 +2233,7 @@
 	)
 	(wire
 		(pts
-			(xy 93.98 78.74) (xy 146.05 78.74)
+			(xy 93.98 76.2) (xy 146.05 76.2)
 		)
 		(stroke
 			(width 0)
@@ -2216,7 +2253,7 @@
 	)
 	(wire
 		(pts
-			(xy 93.98 97.79) (xy 93.98 78.74)
+			(xy 93.98 97.79) (xy 93.98 76.2)
 		)
 		(stroke
 			(width 0)
@@ -2234,8 +2271,18 @@
 		)
 		(uuid "fc6deb01-fed3-4af1-9415-c94aa435373f")
 	)
+	(wire
+		(pts
+			(xy 69.85 110.49) (xy 81.28 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fe8fda90-3dbf-448c-b6bc-0e784c5edcae")
+	)
 	(label "SPI_SCK"
-		(at 152.4 87.63 0)
+		(at 128.27 87.63 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2245,7 +2292,7 @@
 		(uuid "0b70dbc7-cfe2-45e3-87c6-d6b7546df768")
 	)
 	(label "SPI_MOSI"
-		(at 152.4 85.09 0)
+		(at 128.27 85.09 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2255,7 +2302,7 @@
 		(uuid "0c6cc3df-5139-48a6-8f83-6fe830f8cfa1")
 	)
 	(label "RFID_RST"
-		(at 81.28 115.57 0)
+		(at 69.85 115.57 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2265,7 +2312,7 @@
 		(uuid "17b042cd-df42-4495-a466-eaab5d35a877")
 	)
 	(label "SPI_MISO"
-		(at 152.4 90.17 0)
+		(at 128.27 90.17 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2275,7 +2322,7 @@
 		(uuid "2e1c1f38-0797-4d90-9168-354dc5748ce7")
 	)
 	(label "SPI_MISO"
-		(at 81.28 107.95 0)
+		(at 69.85 107.95 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2285,7 +2332,7 @@
 		(uuid "4618e551-9f92-4e43-9059-7b12d33cf9b1")
 	)
 	(label "RFID_CS"
-		(at 152.4 82.55 0)
+		(at 128.27 82.55 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2295,7 +2342,7 @@
 		(uuid "8cc72fd7-51b3-4454-bc8a-eb34ad23f6ee")
 	)
 	(label "RFID_RST"
-		(at 152.4 80.01 0)
+		(at 128.27 80.01 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2305,7 +2352,7 @@
 		(uuid "97d007df-3472-4a15-bd63-191a392a1371")
 	)
 	(label "SPI_SCK"
-		(at 81.28 102.87 0)
+		(at 69.85 102.87 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2315,7 +2362,7 @@
 		(uuid "b83756d3-7f6b-455d-99f5-b420035ed5f6")
 	)
 	(label "RFID_CS"
-		(at 81.28 110.49 0)
+		(at 69.85 110.49 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2325,7 +2372,7 @@
 		(uuid "c8466f5f-f470-4a84-a416-4c4d7bd4990a")
 	)
 	(label "SPI_MOSI"
-		(at 81.28 105.41 0)
+		(at 69.85 105.41 0)
 		(effects
 			(font
 				(size 1.27 1.27)
