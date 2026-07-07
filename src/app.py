@@ -106,7 +106,7 @@ def background_thread():
                     },
                 )
 
-            if TEAM_ID == "#261":
+            if TEAM_ID == "#213" or TEAM_ID == "#261":
                 socketio.emit(
                     "updateSat",
                     {

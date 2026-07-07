@@ -53,19 +53,31 @@ O sistema utiliza comunicação LoRa (Long Range) para transmitir dados de telem
 
 ### Estrutura Geral
 
-Cada pacote é uma linha de texto em formato CSV terminada com `\n`:
+Cada pacote e uma linha de texto em formato CSV terminada com `\n`.
+
+**Formato completo (21 campos) — receptor para backend:**
 
 ```
-TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi\n
+TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,rssi\n
 ```
 
-### Características
+**Formato do satellite (19 campos) — transmissor LoRa:**
 
-- **Delimitador**: Vírgula (`,`)
+```
+TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,alt,lat,lon,sat,rssi\n
+```
+
+Os campos `hora` e `data` nao sao transmitidos pelo satellite (economia de bytes).
+O receptor LoRa preenche esses campos com dados do seu GPS local ao retransmitir
+via Serial no formato completo de 21 campos.
+
+### Caracteristicas
+
+- **Delimitador**: Virgula (`,`)
 - **Terminador**: Line Feed (`\n`)
-- **Total de campos**: 21
-- **Tamanho típico**: ~150 bytes
-- **Frequência**: 0.5 - 2 Hz (1-2 pacotes por segundo)
+- **Total de campos**: 21 (completo) / 19 (satellite)
+- **Tamanho tipico**: ~130 bytes (satellite) / ~150 bytes (completo)
+- **Frequencia**: 1-5 Hz
 
 ## Campos de Dados
 
@@ -86,13 +98,13 @@ TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat
 | 11  | ap      | float  | m/s²     | -156 - 156     | Acelerômetro X                          | 0.1      |
 | 12  | ar      | float  | m/s²     | -156 - 156     | Acelerômetro Y                          | 0.2      |
 | 13  | ay      | float  | m/s²     | -156 - 156     | Acelerômetro Z                          | 9.8      |
-| 14  | hora    | uint32 | HHMMSS   | 0 - 235959     | Hora do GPS                             | 143045   |
-| 15  | data    | uint32 | DDMMYYYY | -              | Data do GPS                             | 20012025 |
+| 14  | hora    | uint32 | HHMMSS   | 0 - 235959     | Hora do GPS (preenchida pelo receptor)  | 143045   |
+| 15  | data    | uint32 | DDMMYYYY | -              | Data do GPS (preenchida pelo receptor)   | 20012025 |
 | 16  | alt     | float  | m        | -500 - 50000   | Altitude GPS                            | 150.0    |
 | 17  | lat     | float  | °        | -90 - 90       | Latitude (graus decimais)               | -23.5505 |
 | 18  | lon     | float  | °        | -180 - 180     | Longitude (graus decimais)              | -46.6333 |
 | 19  | sat     | uint8  | -        | 0 - 255        | Número de satélites GPS                 | 8        |
-| 20  | pqd     | uint8  | -        | 0 ou 1         | Status paraquedas (0=fechado, 1=aberto) | 0        |
+
 | 21  | rssi    | int8   | dBm      | -120 - 0       | Intensidade sinal LoRa no receptor      | -75      |
 
 ### Detalhamento dos Campos
@@ -101,9 +113,9 @@ TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat
 
 ```
 Formato: #XXX
-Valores válidos:
+Valores validos:
   #100 - Foguete principal
-  #261 - Satélite
+  #213 - Satellite (Helike PocketQube)
 ```
 
 #### millis
@@ -172,21 +184,23 @@ Valores típicos:
 
 **Dados específicos:**
 
-- Campo `pqd` é relevante (estado do paraquedas)
+
 - Alta taxa de amostragem durante voo ativo
 
-### TEAM_ID #261 - Satélite
+### TEAM_ID #213 - Satellite (Helike PocketQube)
 
-**Características:**
+**Caracteristicas:**
 
-- Carga útil separável
-- Sensores ambientais adicionais
+- Microsatelite / PocketQube
+- Sensores ambientais (temp, umi, pressao, IMU, GPS)
 - Rastreamento independente
+- Sem atuadores de recuperacao
 
-**Dados específicos:**
+**Dados especificos:**
 
-- Dados ambientais (temp, umi, p) mais relevantes
-- Campo `pqd` pode não ser usado
+- Dados de IMU (acelerometro + giroscopio) relevantes
+- Dados ambientais (temperatura, umidade, pressao)
+
 
 ## Exemplos de Pacotes
 
@@ -234,7 +248,7 @@ Valores típicos:
 - Tempo: 25 segundos
 - Altitude máxima: 850m
 - Aceleração: ~9.8 m/s² (queda livre)
-- Paraquedas: **ABERTO** (pqd=1)
+
 - RSSI: -80 dBm (razoável)
 
 ### Foguete em Descida
@@ -267,7 +281,7 @@ Valores típicos:
 
 ```python
 try:
-    TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi = fields
+    TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,rssi = fields
 except ValueError as e:
     print(f"Erro parse: campos insuficientes - {e}")
     # Descarta pacote
@@ -351,7 +365,7 @@ void sendTelemetry() {
         latitude,           // lat
         longitude,          // lon
         satellites,         // sat
-        parachuteDeployed,  // pqd
+
         lora.getRSSI()      // rssi
     );
 

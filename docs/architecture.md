@@ -331,7 +331,7 @@ Formato: NOW,TEAM_ID,millis,count,...
 ### Formato dos Dados
 
 ```csv
-TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi
+TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,rssi
 #100,12345,42,150.5,25.3,45.2,1013.25,0.5,1.2,-0.3,0.1,0.2,9.8,123045,20250120,150.0,-23.5500,-46.6333,8,0,-75
 ```
 
@@ -359,7 +359,7 @@ base_com(port, baudrate=115200, timeout=0.5)
 
 ```
 Header:
-NOW,TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi
+NOW,TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,rssi
 
 Linha de exemplo:
 2025-01-20 14:30:45,#100,12345,42,150.5,25.3,45.2,1013.25,0.5,1.2,-0.3,0.1,0.2,9.8,143045,20250120,150.0,-23.5500,-46.6333,8,0,-75

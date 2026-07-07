@@ -319,7 +319,7 @@ def background_thread():
     # ... código existente ...
 
     # Adicione o novo campo no parse
-    TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi,vvel = fields
+    TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,rssi,vvel = fields
 
     if TEAM_ID == '#100':
         socketio.emit('updateRocket', {
@@ -328,7 +328,7 @@ def background_thread():
             'altura': altp,
             'satelites': sat,
             'rssi': rssi,
-            'pqd': pqd,
+
             'velocidadeVertical': vvel,  # Novo campo
             'time': now
         })
@@ -345,10 +345,9 @@ socket.on("updateRocket", function (msg) {
   var time = jsonData.time;
   var altura = jsonData.altura;
   var rssi = jsonData.rssi;
-  var pqd = jsonData.pqd;
   var vvel = jsonData.velocidadeVertical; // Novo campo
 
-  addData(latitude, longitude, altura, satelites, time, rssi, pqd, vvel);
+  addData(latitude, longitude, altura, satelites, time, rssi, vvel);
 });
 ```
 
@@ -530,7 +529,7 @@ socket.on("updateRocket", function (msg) {
 #### Debugger do Navegador
 
 ```javascript
-function addData(latitude, longitude, altura, satelites, time, rssi, pqd) {
+function addData(latitude, longitude, altura, satelites, time, rssi) {
   // Breakpoint - adicione via DevTools ou:
   debugger;
 
