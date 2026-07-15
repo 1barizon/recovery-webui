@@ -21,8 +21,5 @@
 #define GPS_TX_PIN      21
 #define GPS_BAUD        9600
 
-// ── Buzzer ──────────────────────────────────────
-#define BUZZER_PIN      11
-
 // ── Serial (USB) ────────────────────────────────
 #define SERIAL_BAUD     115200

@@ -19,7 +19,6 @@ Receiver LoRa
 ├── main.cpp               — Setup + loop (recebe LoRa, parse, retransmite)
 ├── LoraReceiver.h/cpp     — Driver LoRa (modo RX continuo + TX para debug)
 ├── GpsModule.h/cpp        — Wrapper TinyGPSPlus (GPS local do receiver)
-├── Buzzer.h/cpp           — Feedback sonoro (boot, RX, erro)
 └── payload.h              — Formatacao do pacote CSV de 21 campos (protocolo)
 ```
 
@@ -112,7 +111,6 @@ Exemplo de log na Serial:
 | 5    | SPI CS     | RFM95W chip sel  |
 | 6    | LoRa RST   | RFM95W reset     |
 | 7    | LoRa IRQ   | RFM95W DIO0      |
-| 11   | Buzzer     | Piezo            |
 | 20   | UART1 RX   | GPS NEO-8M TX    |
 | 21   | UART1 TX   | GPS NEO-8M RX    |
 
@@ -172,16 +170,6 @@ pio device monitor -b 115200
 | Rural / vegetacao    | 21 km         |
 | Suburban             | 6 km          |
 | Suburban denso       | 2.4 km        |
-
-## Feedbacks Sonoros
-
-| Som        | Significado                          |
-|------------|--------------------------------------|
-| 2 bips     | Boot                                 |
-| 1 bip longo| LoRa inicializado OK                 |
-| 3 bips     | Falha na inicializacao LoRa          |
-| 3 bips med | GPS obteve fix                       |
-| 1 bip curto| Pacote LoRa recebido e retransmitido |
 
 ## ADRs
 

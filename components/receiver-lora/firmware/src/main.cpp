@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "config.h"
-#include "Buzzer.h"
 #include "GpsModule.h"
 #include "LoraReceiver.h"
 #include "payload.h"
@@ -138,14 +137,9 @@ void setup() {
     Serial.println("=== Recovery System — LoRa Receiver ===");
     Serial.println();
 
-    buzzerInit();
-    beepBoot();
-
     gpsInit();
 
     loraReady = loraInit();
-    if (loraReady) beepLoraOK();
-    else           beepLoraError();
 
     Serial.println();
     Serial.println("[SYS] Aguardando pacotes LoRa do satellite...");
@@ -205,6 +199,4 @@ void loop() {
 
     // Retransmite via Serial para o Recovery WebUI
     Serial.println(protocolPacket);
-
-    beepTx();
 }
