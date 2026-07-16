@@ -1,6 +1,16 @@
+/*
+ * Receiver LoRa — Recovery WebUI
+ * Recebe pacotes de telemetria via LoRa (915 MHz), adiciona hora/data do GPS local
+ * e retransmite via Serial + salva no LittleFS.
+ *
+ * LittleFS: Para usar na IDE Arduino, selecione:
+ *   Tools > Partition Scheme > "Default 4MB with spiffs (1.2MB APP/1.5MB SPIFFS)"
+ */
+
 #include <SPI.h>
 #include <LoRa.h>
 #include <TinyGPS++.h>
+#include "LittleFS.h"
 
 // ── Config ──────────────────────────────────────
 #define LORA_SCK        4
@@ -120,6 +130,40 @@ static String buildProtocolPacket(
     return String(buf);
 }
 
+// ── LittleFS ────────────────────────────────────
+static String logPath;
+static bool   fsReady = false;
+
+static bool setupLittleFS() {
+    if (!LittleFS.begin(true)) { Serial.println("[FS] Falha"); return false; }
+    Serial.printf("[FS] LittleFS OK — %u bytes total\n", (unsigned)LittleFS.totalBytes());
+    return true;
+}
+
+static String generateLogPath() {
+    for (int i = 1; i <= 999; i++) {
+        char path[32];
+        snprintf(path, sizeof(path), "/recovery_%03d.csv", i);
+        if (!LittleFS.exists(path)) return String(path);
+    }
+    return String("/overflow.csv");
+}
+
+static void writeHeader(const char* path) {
+    File f = LittleFS.open(path, FILE_WRITE);
+    if (!f) { Serial.println("[FS] Erro ao criar cabecalho"); return; }
+    f.println("millis,TEAM_ID,millis_ts,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi");
+    f.close();
+}
+
+static void appendLog(const String &line) {
+    if (!fsReady) return;
+    File f = LittleFS.open(logPath.c_str(), FILE_APPEND);
+    if (!f) { Serial.println("[FS] Erro ao abrir para append"); return; }
+    f.println(line);
+    f.close();
+}
+
 // ── Main ───────────────────────────────────────
 static uint32_t lastCount = 0, totalReceived = 0, totalLost = 0, totalErrors = 0;
 static bool     firstPacket = true;
@@ -173,6 +217,14 @@ void setup() {
     Serial.println("\n=== Recovery System — LoRa Receiver ===\n");
     gpsInit();
     _loraReady = loraInit();
+
+    fsReady = setupLittleFS();
+    if (fsReady) {
+        logPath = generateLogPath();
+        writeHeader(logPath.c_str());
+        Serial.printf("[FS] Log gravando em: %s\n", logPath.c_str());
+    }
+
     Serial.println("\n[SYS] Aguardando pacotes LoRa...\n");
 }
 
@@ -206,4 +258,7 @@ void loop() {
         ax, ay, az, gx, gy, gz, temp, press, hum, altp,
         lat, lon, alt, sats, t.hhmmss, t.ddmmyyyy, rxRssi);
     Serial.println(pkt);
+
+    String logLine = String(millis()) + "," + pkt;
+    appendLog(logLine);
 }

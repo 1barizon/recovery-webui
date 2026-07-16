@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "LittleFS.h"
 #include "config.h"
 #include "GpsModule.h"
 #include "LoraReceiver.h"
@@ -12,6 +13,10 @@ static uint32_t totalReceived   = 0;    // total de pacotes recebidos com sucess
 static uint32_t totalLost       = 0;    // total de pacotes perdidos (saltos no count)
 static uint32_t totalErrors     = 0;    // total de pacotes com parse falho
 static bool     firstPacket     = true; // true ate receber o primeiro pacote
+
+// ── LittleFS ────────────────────────────────────
+static String logPath;
+static bool   fsReady = false;
 
 /**
  * @brief Faz parse do CSV de 19 campos recebido do satellite.
@@ -130,6 +135,41 @@ static void logStats() {
                    + "%");
 }
 
+// ── LittleFS ────────────────────────────────────
+
+static bool setupLittleFS() {
+    if (!LittleFS.begin(true)) {
+        Serial.println("[FS] Falha ao montar LittleFS");
+        return false;
+    }
+    Serial.printf("[FS] LittleFS OK — %u bytes total\n", (unsigned)LittleFS.totalBytes());
+    return true;
+}
+
+static String generateLogPath() {
+    for (int i = 1; i <= 999; i++) {
+        char path[32];
+        snprintf(path, sizeof(path), "/recovery_%03d.csv", i);
+        if (!LittleFS.exists(path)) return String(path);
+    }
+    return String("/overflow.csv");
+}
+
+static void writeHeader(const char* path) {
+    File f = LittleFS.open(path, FILE_WRITE);
+    if (!f) { Serial.println("[FS] Erro ao criar cabecalho"); return; }
+    f.println("millis,TEAM_ID,millis_ts,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi");
+    f.close();
+}
+
+static void appendLog(const String &line) {
+    if (!fsReady) return;
+    File f = LittleFS.open(logPath.c_str(), FILE_APPEND);
+    if (!f) { Serial.println("[FS] Erro ao abrir para append"); return; }
+    f.println(line);
+    f.close();
+}
+
 void setup() {
     Serial.begin(SERIAL_BAUD);
     delay(400);
@@ -140,6 +180,13 @@ void setup() {
     gpsInit();
 
     loraReady = loraInit();
+
+    fsReady = setupLittleFS();
+    if (fsReady) {
+        logPath = generateLogPath();
+        writeHeader(logPath.c_str());
+        Serial.printf("[FS] Log gravando em: %s\n", logPath.c_str());
+    }
 
     Serial.println();
     Serial.println("[SYS] Aguardando pacotes LoRa do satellite...");
@@ -199,4 +246,8 @@ void loop() {
 
     // Retransmite via Serial para o Recovery WebUI
     Serial.println(protocolPacket);
+
+    // Salva no LittleFS com timestamp local
+    String logLine = String(millis()) + "," + protocolPacket;
+    appendLog(logLine);
 }
