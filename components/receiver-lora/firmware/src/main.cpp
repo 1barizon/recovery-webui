@@ -19,10 +19,14 @@ static String logPath;
 static bool   fsReady = false;
 
 /**
- * @brief Faz parse do CSV de 19 campos recebido do satellite.
+ * @brief Faz parse do CSV de 22 campos recebido do satellite.
  *
- // Formato do satellite (18 campos):
- // TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,alt,lat,lon,sat,rssi
+ * Formato v2.0 (alinhado com firmware do flight-computer, Fase 10):
+ * TEAM_ID,millis,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,
+ * maxAltitude,state,alt,lat,lon,sat,parachute,rssi
+ *
+ * O campo "rssi" enviado pelo satellite e' placeholder (0); o RSSI real do
+ * link descendente e' medido aqui (rxRssi) e usado no protocolPacket.
  *
  * Retorna true se o parse foi bem sucedido.
  */
@@ -35,16 +39,20 @@ static bool parseSatellitePacket(
     float &gx, float &gy, float &gz,
     float &temp, float &press, float &hum,
     float &altp,
+    float &vz,
+    float &max_alt,
+    int   &state,
     float &lat, float &lon, float &alt,
     uint8_t &sats,
-    int &rssi
+    int   &parachute,
+    int   &rssi_placeholder
 ) {
-    // Valida numero de campos
+    // Valida numero de campos (22 campos = 21 virgulas)
     int commaCount = 0;
     for (unsigned i = 0; i < raw.length(); i++) {
         if (raw[i] == ',') commaCount++;
     }
-    if (commaCount < 18) {
+    if (commaCount < 21) {
         Serial.println("[PARSE] Pacote incompleto: " + String(commaCount + 1) + " campos");
         return false;
     }
@@ -64,24 +72,28 @@ static bool parseSatellitePacket(
 
     String field;
 
-    nextField(team_id);          // 0  TEAM_ID
-    nextField(field); millis_ts = field.toInt();  // 1  millis
-    nextField(field); count = field.toInt();      // 2  count
-    nextField(field); altp = field.toFloat();     // 3  altp
-    nextField(field); temp = field.toFloat();     // 4  temp
-    nextField(field); hum = field.toFloat();      // 5  umi
-    nextField(field); press = field.toFloat();    // 6  p
-    nextField(field); gx = field.toFloat();       // 7  gp
-    nextField(field); gy = field.toFloat();       // 8  gr
-    nextField(field); gz = field.toFloat();       // 9  gy
-    nextField(field); ax = field.toFloat();       // 10 ap
-    nextField(field); ay = field.toFloat();       // 11 ar
-    nextField(field); az = field.toFloat();       // 12 ay
-    nextField(field); alt = field.toFloat();      // 13 alt
-    nextField(field); lat = field.toFloat();      // 14 lat
-    nextField(field); lon = field.toFloat();      // 15 lon
-    nextField(field); sats = (uint8_t)field.toInt(); // 16 sat
-    nextField(field); rssi = field.toInt();       // 17 rssi (placeholder -1)
+    nextField(team_id);                // 0  TEAM_ID
+    nextField(field); millis_ts = field.toInt();   // 1  millis
+    nextField(field); count = field.toInt();        // 2  count
+    nextField(field); altp = field.toFloat();       // 3  altp
+    nextField(field); temp = field.toFloat();       // 4  temp
+    nextField(field); hum = field.toFloat();        // 5  umi (0 se sem sensor)
+    nextField(field); press = field.toFloat();      // 6  p
+    nextField(field); gx = field.toFloat();         // 7  gx
+    nextField(field); gy = field.toFloat();         // 8  gy
+    nextField(field); gz = field.toFloat();         // 9  gz
+    nextField(field); ax = field.toFloat();         // 10 ax
+    nextField(field); ay = field.toFloat();         // 11 ay
+    nextField(field); az = field.toFloat();         // 12 az
+    nextField(field); vz = field.toFloat();         // 13 vz
+    nextField(field); max_alt = field.toFloat();    // 14 maxAltitude
+    nextField(field); state = field.toInt();        // 15 state
+    nextField(field); alt = field.toFloat();        // 16 alt (GPS)
+    nextField(field); lat = field.toFloat();        // 17 lat
+    nextField(field); lon = field.toFloat();        // 18 lon
+    nextField(field); sats = (uint8_t)field.toInt(); // 19 sat
+    nextField(field); parachute = field.toInt();    // 20 parachute (0/1)
+    nextField(field); rssi_placeholder = field.toInt(); // 21 rssi (placeholder)
 
     return true;
 }
@@ -158,7 +170,7 @@ static String generateLogPath() {
 static void writeHeader(const char* path) {
     File f = LittleFS.open(path, FILE_WRITE);
     if (!f) { Serial.println("[FS] Erro ao criar cabecalho"); return; }
-    f.println("millis,TEAM_ID,millis_ts,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi");
+    f.println("millis,TEAM_ID,millis_ts,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,maxAltitude,state,hora,data,alt,lat,lon,sat,parachute,rssi");
     f.close();
 }
 
@@ -213,14 +225,18 @@ void loop() {
     uint32_t millis_ts, count;
     float ax, ay, az, gx, gy, gz;
     float temp, press, hum, altp;
+    float vz, max_alt;
+    int state;
     float lat, lon, alt;
     uint8_t sats;
+    int parachute;
     int rssi_placeholder;
 
     if (!parseSatellitePacket(raw, team_id, millis_ts, count,
                               ax, ay, az, gx, gy, gz,
                               temp, press, hum, altp,
-                              lat, lon, alt, sats, rssi_placeholder)) {
+                              vz, max_alt, state,
+                              lat, lon, alt, sats, parachute, rssi_placeholder)) {
         totalErrors++;
         Serial.println("[STATS] Erro de parse #" + String(totalErrors));
         logStats();
@@ -233,12 +249,14 @@ void loop() {
     // Hora/data do GPS local do receiver
     GpsTimeData gpsTime = gpsGetTimeData();
 
-    // Monta pacote no formato do protocolo (21 campos)
+    // Monta pacote no formato do protocolo (22 campos + hora/data do receiver)
     String protocolPacket = buildProtocolPacket(
         team_id, millis_ts, count,
         ax, ay, az, gx, gy, gz,
         temp, press, hum, altp,
+        vz, max_alt, state,
         lat, lon, alt, sats,
+        parachute,
         gpsTime.hhmmss,
         gpsTime.ddmmyyyy,
         rxRssi       // RSSI real medido pelo receiver

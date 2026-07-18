@@ -118,15 +118,18 @@ static String buildProtocolPacket(
     const String &team_id, uint32_t millis_ts, uint32_t count,
     float ax, float ay, float az, float gx, float gy, float gz,
     float temp, float press, float hum, float altp,
+    float vz, float max_alt, int state,
     float lat, float lon, float alt, uint8_t sats,
+    int parachute,
     uint32_t hora, uint32_t data_gps, int rssi
 ) {
     char buf[256];
     snprintf(buf, sizeof(buf),
-        "%s,%lu,%u,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%lu,%lu,%.2f,%.6f,%.6f,%u,%u,%d",
+        "%s,%lu,%u,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%lu,%lu,%.2f,%.6f,%.6f,%u,%d,%d",
         team_id.c_str(), millis_ts, count,
         altp, temp, hum, press, gx, gy, gz, ax, ay, az,
-        hora, data_gps, alt, lat, lon, sats, (unsigned)0, rssi);
+        vz, max_alt, state,
+        hora, data_gps, alt, lat, lon, sats, parachute, rssi);
     return String(buf);
 }
 
@@ -152,7 +155,7 @@ static String generateLogPath() {
 static void writeHeader(const char* path) {
     File f = LittleFS.open(path, FILE_WRITE);
     if (!f) { Serial.println("[FS] Erro ao criar cabecalho"); return; }
-    f.println("millis,TEAM_ID,millis_ts,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat,pqd,rssi");
+    f.println("millis,TEAM_ID,millis_ts,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,maxAltitude,state,hora,data,alt,lat,lon,sat,parachute,rssi");
     f.close();
 }
 
@@ -172,11 +175,13 @@ static bool parseSatellitePacket(const String &raw,
     String &team_id, uint32_t &millis_ts, uint32_t &count,
     float &ax, float &ay, float &az, float &gx, float &gy, float &gz,
     float &temp, float &press, float &hum, float &altp,
-    float &lat, float &lon, float &alt, uint8_t &sats, int &rssi
+    float &vz, float &max_alt, int &state,
+    float &lat, float &lon, float &alt, uint8_t &sats,
+    int &parachute, int &rssi_placeholder
 ) {
     int commas = 0;
     for (unsigned i = 0; i < raw.length(); i++) if (raw[i] == ',') commas++;
-    if (commas < 18) { Serial.println("[PARSE] Incompleto: " + String(commas + 1) + " campos"); return false; }
+    if (commas < 21) { Serial.println("[PARSE] Incompleto: " + String(commas + 1) + " campos"); return false; }
 
     int start = 0;
     auto next = [&](String &out) {
@@ -192,9 +197,11 @@ static bool parseSatellitePacket(const String &raw,
     next(f); press = f.toFloat(); next(f); gx = f.toFloat();
     next(f); gy = f.toFloat(); next(f); gz = f.toFloat();
     next(f); ax = f.toFloat(); next(f); ay = f.toFloat();
-    next(f); az = f.toFloat(); next(f); alt = f.toFloat();
-    next(f); lat = f.toFloat(); next(f); lon = f.toFloat();
-    next(f); sats = f.toInt(); next(f); rssi = f.toInt();
+    next(f); az = f.toFloat(); next(f); vz = f.toFloat();
+    next(f); max_alt = f.toFloat(); next(f); state = f.toInt();
+    next(f); alt = f.toFloat(); next(f); lat = f.toFloat();
+    next(f); lon = f.toFloat(); next(f); sats = f.toInt();
+    next(f); parachute = f.toInt(); next(f); rssi_placeholder = f.toInt();
     return true;
 }
 
@@ -241,13 +248,17 @@ void loop() {
 
     String team_id;
     uint32_t millis_ts, count;
-    float ax, ay, az, gx, gy, gz, temp, press, hum, altp, lat, lon, alt;
+    float ax, ay, az, gx, gy, gz, temp, press, hum, altp, vz, max_alt;
+    int state;
+    float lat, lon, alt;
     uint8_t sats;
+    int parachute;
     int rssi_placeholder;
 
     if (!parseSatellitePacket(raw, team_id, millis_ts, count,
         ax, ay, az, gx, gy, gz, temp, press, hum, altp,
-        lat, lon, alt, sats, rssi_placeholder)) {
+        vz, max_alt, state,
+        lat, lon, alt, sats, parachute, rssi_placeholder)) {
         totalErrors++;
         return;
     }
@@ -256,7 +267,9 @@ void loop() {
     GpsTimeData t = gpsGetTimeData();
     String pkt = buildProtocolPacket(team_id, millis_ts, count,
         ax, ay, az, gx, gy, gz, temp, press, hum, altp,
-        lat, lon, alt, sats, t.hhmmss, t.ddmmyyyy, rxRssi);
+        vz, max_alt, state,
+        lat, lon, alt, sats, parachute,
+        t.hhmmss, t.ddmmyyyy, rxRssi);
     Serial.println(pkt);
 
     String logLine = String(millis()) + "," + pkt;
