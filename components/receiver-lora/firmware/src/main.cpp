@@ -47,10 +47,20 @@ static bool parseSatellitePacket(
     int   &parachute,
     int   &rssi_placeholder
 ) {
+    // --- End-of-packet marker validation ---
+    // Satellite terminates every packet with '#' so the receiver can detect
+    // truncation or corruption. If no '#', discard.
+    if (!raw.endsWith("#")) {
+        Serial.println("[PARSE] Missing end-of-packet marker (#) — discarded");
+        return false;
+    }
+    // Strip the '#' before parsing
+    String line = raw.substring(0, raw.length() - 1);
+
     // Valida numero de campos (22 campos = 21 virgulas)
     int commaCount = 0;
-    for (unsigned i = 0; i < raw.length(); i++) {
-        if (raw[i] == ',') commaCount++;
+    for (unsigned i = 0; i < line.length(); i++) {
+        if (line[i] == ',') commaCount++;
     }
     if (commaCount < 21) {
         Serial.println("[PARSE] Pacote incompleto: " + String(commaCount + 1) + " campos");
@@ -60,12 +70,12 @@ static bool parseSatellitePacket(
     int start = 0;
 
     auto nextField = [&](String &out) {
-        int next = raw.indexOf(',', start);
+        int next = line.indexOf(',', start);
         if (next == -1) {
-            out = raw.substring(start);
-            start = raw.length();
+            out = line.substring(start);
+            start = line.length();
         } else {
-            out = raw.substring(start, next);
+            out = line.substring(start, next);
             start = next + 1;
         }
     };
