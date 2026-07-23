@@ -160,12 +160,17 @@ def background_thread():
 ### SerialCOM.py - Detalhamento
 
 ```python
-class base_com:
-    ├── __init__()           # Inicializa conexão serial
-    ├── send_command()       # Envia comandos (não usado no momento)
-    ├── read_response()      # Lê uma linha da serial
-    ├── check_connection()   # Verifica se porta está aberta
-    └── close()             # Fecha conexão
+class BaseCom:
+    ├── __init__()           # Inicializa (port=None, lazy)
+    ├── open()               # Abre conexao serial
+    ├── close()              # Fecha conexao
+    ├── send_command()       # Envia comandos (nao usado no momento)
+    ├── read_response()      # Le uma linha da serial
+    ├── check_connected()    # Verifica se porta esta aberta
+    ├── get_port() / set_port()
+    ├── get_baudrate() / set_baudrate()
+    └── get_port_options() / get_baudrate_options()
+```
 
 def list_ports():           # Lista portas seriais disponíveis
     ├── Windows: Todas as portas COM
@@ -258,7 +263,7 @@ Lista portas seriais disponíveis
     ↓
 Usuario seleciona porta
     ↓
-Cria objeto base_com(porta)
+Cria objeto BaseCom(porta)
     ↓
 Inicia servidor Flask na porta 5000
     ↓
@@ -338,7 +343,7 @@ TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,hora,data,alt,lat,lon,sat
 ### Estrutura da Classe Serial
 
 ```python
-base_com(port, baudrate=115200, timeout=0.5)
+BaseCom(port, baudrate=115200, timeout=0.5)
     │
     ├─ Configuração
     │   ├─ xonxoff = False      (sem controle XON/XOFF)
