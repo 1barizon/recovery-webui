@@ -107,7 +107,15 @@ if cli_mode:
 # Interface serial + Receiver
 # ══════════════════════════════════════════════════════════════════════════
 
-com: BaseCom = FakeCom(antenna_logger) if simulation_mode else BaseCom(antenna_logger)
+if simulation_mode:
+    com: BaseCom = FakeCom(antenna_logger)
+else:
+    if BaseCom is None:
+        main_logger.error(
+            "pyserial nao instalado. Use --simulation ou instale: pip install pyserial"
+        )
+        sys.exit(1)
+    com = BaseCom(antenna_logger)
 data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
 receiver = Receiver(com, logger=antenna_logger, data_dir=data_dir)
 

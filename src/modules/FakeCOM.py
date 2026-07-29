@@ -5,7 +5,17 @@ Fornece a classe FakeCom que emula a comunicação serial do receptor LoRa
 com dados de telemetria sintéticos no formato v2.0 (24 campos).
 """
 
-from modules.SerialCOM import BaseCom
+try:
+    from .SerialCOM import BaseCom
+except ImportError:
+    # pyserial nao instalado — FakeCom funciona sem serial real
+    class BaseCom:  # type: ignore
+        """Stub para quando pyserial nao esta disponivel."""
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "pyserial nao instalado. Use --simulation ou pip install pyserial"
+            )
+
 import logging
 from typing import Optional
 
