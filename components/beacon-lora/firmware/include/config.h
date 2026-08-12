@@ -24,6 +24,28 @@
 // ── Serial (USB) ────────────────────────────────
 #define SERIAL_BAUD     115200
 
-// ── Configurações de transmissão ────────────────
-#define TX_INTERVAL_MS  200     // 5 Hz
-#define TEAM_ID         "#213"
+// ── Identidade do beacon ────────────────────────
+// Cada beacon do mesh deve ser gravado com um ID unico ("B1".."B8").
+// O pacote de report usa "#B1" como TEAM_ID, o que permite ao receiver
+// distinguir report de beacon de pacote de satellite ("#213").
+#define BEACON_ID       "B1"
+
+// TEAM_ID do satellite que o beacon escuta (Mission ID)
+#define SAT_TEAM_ID     "#213"
+
+// ── Temporizacao dos reports ────────────────────
+// Intervalo minimo entre reports que referenciam um pacote ouvido do
+// satellite. O satellite transmite a 5 Hz; com 250 ms o beacon reporta
+// ~4x/s e ainda deixa espaco para os demais beacons no canal.
+#define REPORT_MIN_INTERVAL_MS  250
+
+// Heartbeat: quando o beacon NAO ouve o satellite ha mais que este
+// intervalo, envia report com sat_count=0 para o receiver saber que o
+// beacon esta ativo (mas nao ouvindo).
+#define HEARTBEAT_INTERVAL_MS   2000
+
+// Jitter aleatorio aplicado antes de cada TX (anti-colisao): quando
+// varios beacons ouvem o MESMO pacote do satellite, sem jitter eles
+// transmitiriam o report juntos e colidiriam no receiver.
+#define TX_JITTER_MIN_MS        15
+#define TX_JITTER_MAX_MS        120

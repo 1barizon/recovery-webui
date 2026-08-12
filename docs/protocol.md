@@ -11,6 +11,7 @@ Este documento detalha o protocolo de comunicação entre os dispositivos transm
 - [Identificadores de Dispositivos](#identificadores-de-dispositivos)
 - [Exemplos de Pacotes](#exemplos-de-pacotes)
 - [Tratamento de Erros](#tratamento-de-erros)
+- [Mesh de Trilateração](#mesh-de-trilateração)
 - [Boas Práticas](#boas-práticas)
 
 ## Visão Geral
@@ -66,6 +67,26 @@ TEAM_ID,millis,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,maxAltitude,state,hora
 ```
 TEAM_ID,millis,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,maxAltitude,state,alt,lat,lon,sat,parachute,rssi
 ```
+
+**Formato do report de beacon (11 campos) — beacon para receiver:**
+
+```
+#B1,millis,count,sat_count,sat_millis,lat,lon,alt,sat,rssi,gpsv
+```
+
+| #  | Campo       | Tipo    | Unidade | Descricao                                                  |
+| -- | ----------- | ------- | ------- | ---------------------------------------------------------- |
+| 1  | TEAM_ID     | string  | -       | `#B1`..`#B8` — report de beacon (distinto de pacote de veiculo) |
+| 2  | millis      | uint32  | ms      | Uptime do beacon no momento do TX                          |
+| 3  | count       | uint32  | -       | Contador sequencial de TX do beacon (debug/perda)          |
+| 4  | sat_count   | uint32  | -       | Count do ultimo pacote do satellite ouvido (0 = heartbeat) |
+| 5  | sat_millis  | uint32  | ms      | Uptime do beacon quando ouviu esse pacote                  |
+| 6  | lat         | float   | °       | Latitude GPS do beacon                                     |
+| 7  | lon         | float   | °       | Longitude GPS do beacon                                    |
+| 8  | alt         | float   | m       | Altitude GPS do beacon                                     |
+| 9  | sat         | uint8   | -       | Satelites GPS em vista no beacon                           |
+| 10 | rssi        | int     | dBm     | RSSI do pacote do satellite ouvido (-127 no heartbeat)     |
+| 11 | gpsv        | uint8   | -       | 1 = fix GPS valido, 0 = sem fix                            |
 
 Os campos `hora` e `data` nao sao transmitidos pelo satelite (economia de bytes).
 O receptor LoRa preenche esses campos com dados do seu GPS local ao retransmitir
@@ -219,6 +240,19 @@ Valores típicos:
 - Dados de IMU (acelerometro + giroscopio) relevantes
 - Dados ambientais (temperatura, umidade, pressao)
 
+### TEAM_ID #B1..#B8 — Beacons (mesh de trilateracao)
+
+**Caracteristicas:**
+
+- Nos terrestres do ground segment (mesmo hardware do receiver)
+- Escutam o satellite via LoRa e medem o RSSI do pacote
+- Reportam posicao GPS propria + RSSI para o receiver (formato 11 campos)
+
+**Dados especificos:**
+
+- RSSI do mesmo pacote do satellite em varios pontos do campo
+- Posicao GPS de cada ouvinte — base para a trilateracao
+
 
 ## Exemplos de Pacotes (v2.0)
 
@@ -354,6 +388,61 @@ if count != last_count + 1:
 
 last_count = count
 ```
+
+## Mesh de Trilateração
+
+### Objetivo
+
+Quando o satellite está longe do alcance de visada ou o GPS dele falha/deriva,
+o receiver recalcula a posição projetada no chão usando o **RSSI do mesmo
+pacote** medido por vários ouvintes (receiver + beacons).
+
+### Fluxo
+
+```
+Satellite (#213, 5 Hz)
+   │  LoRa
+   ▼
+Receiver (~origem) ──────┐       Beacon B1..B8 (GPS proprio)
+   │  escuta + RSSI       │       │  escuta + RSSI
+   │                      │       ▼
+   ▼                      │  report #Bx (11 campos, jitter 15-120 ms)
+cesto de sincronização ◄──┴───────┘
+(count % 8, janela 900 ms)
+   │
+   ├─ ≥3 ouvintes ├─ LSQ 2D (residuo ≤ 1500 m) ─► emite #213 corrigido
+   │
+   └─ prazo estourado ─► emite #213 com GPS cru do pacote
+```
+
+### Modelo RSSI → distância
+
+```
+r = 10 ^ ((TX_POWER - RSSI) / (10 * n))     [slant range, m]
+d = sqrt(r² - h²)                           [projeção no chão, h = altp do pacote]
+```
+
+- `TX_POWER` = 17 dBm (potência do satellite)
+- `n` = 2.0 (espaço livre; ajustável no receiver em `TRILAT_PATH_LOSS_N`)
+
+### Regras de validação
+
+1. Report `#Bx` só vira amostra se: referencia um pacote (`sat_count != 0`),
+   beacon tem fix GPS (`gpsv == 1`) e o RSSI é fresco (`millis - sat_millis ≤ 1500 ms`).
+2. Correção aplicada **somente** ao satellite `#213` — foguetes `#11`/`#51`
+   seguem retransmissão direta.
+3. Solução LSQ com resíduo médio > 1500 m é descartada (GPS cru prevalece).
+
+### Precisão (Monte Carlo, mesma fórmula do firmware)
+
+| Ruído RSSI | Erro mediano | p95    |
+|------------|--------------|--------|
+| ±1 dB      | 134 m        | 309 m  |
+| ±2 dB      | 268 m        | 744 m  |
+
+**Leitura**: a correção é um refinamento grosseiro — com RSSI ruidoso o GPS
+cru do satellite continua sendo a fonte primária. O encaixe é usado como
+cross-check e fallback quando o GPS do satellite falha.
 
 ## Boas Práticas
 

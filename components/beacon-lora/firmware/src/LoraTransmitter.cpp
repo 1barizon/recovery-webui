@@ -22,8 +22,12 @@ bool loraInit() {
     LoRa.setTxPower(LORA_TX_POWER);
     LoRa.enableCrc();
 
+    // Beacon escuta o satellite: modo de recepcao continua. A transmissao
+    // (loraSend) pausa o RX e volta em seguida.
+    LoRa.receive();
+
     _loraReady = true;
-    Serial.print("[LoRa] TX OK (");
+    Serial.print("[LoRa] TX/RX OK (");
     Serial.print(LORA_FREQUENCY / 1E6, 0);
     Serial.print("MHz, SF");
     Serial.print(LORA_SF);
@@ -36,9 +40,13 @@ bool loraInit() {
 bool loraSend(const String& payload) {
     if (!_loraReady) return false;
 
+    // Pausa RX para transmitir
+    LoRa.idle();
     LoRa.beginPacket();
     LoRa.print(payload);
     bool ok = (LoRa.endPacket() == 1);
+    // Volta para modo RX
+    LoRa.receive();
 
     if (ok) {
         Serial.println("[LoRa] TX: " + payload);
@@ -46,6 +54,29 @@ bool loraSend(const String& payload) {
         Serial.println("[LoRa] Falha no envio");
     }
     return ok;
+}
+
+bool loraAvailable() {
+    if (!_loraReady) return false;
+    return LoRa.parsePacket() > 0;
+}
+
+String loraReceive() {
+    if (!_loraReady) return "";
+
+    int packetSize = LoRa.parsePacket();
+    if (packetSize <= 0) return "";
+
+    String payload;
+    payload.reserve(packetSize);
+    while (LoRa.available()) {
+        payload += (char)LoRa.read();
+    }
+
+    // Garante modo RX (parsePacket pode sair do modo RX)
+    LoRa.receive();
+
+    return payload;
 }
 
 int loraLastRSSI() {
