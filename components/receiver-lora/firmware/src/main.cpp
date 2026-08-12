@@ -129,14 +129,20 @@ static void addSample(PendingPacket &p, const char* id,
 }
 
 /**
- * @brief Faz parse do CSV de 22 campos recebido do satellite.
+ * @brief Faz parse do CSV recebido via LoRa (dois formatos, por TEAM_ID).
  *
- * Formato v2.0 (alinhado com firmware do flight-computer, Fase 10):
- * TEAM_ID,millis,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,
- * maxAltitude,state,alt,lat,lon,sat,parachute,rssi
+ * Foguete #11/#51 (flight-computer v2.0, 22 campos):
+ *   TEAM_ID,millis,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,
+ *   maxAltitude,state,alt,lat,lon,sat,parachute,rssi
  *
- * O marcador '#' final e' OPCIONAL: o satellite real nao envia, o simulador
- * envia. Pacotes truncados/corrompidos (menos de 22 campos) sao descartados.
+ * Satellite #213 (Helike, 18 campos — sem vz/maxAltitude/state/parachute):
+ *   TEAM_ID,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,alt,lat,lon,sat,rssi
+ *   gp/gr/gy = giroscopio, ap/ar/ay = acelerometro (rad/s e m/s2).
+ *   Os campos ausentes sao zerados na saida (mantem o emissor v2.0 de 24 campos).
+ *
+ * O marcador '#' final e' ENVIADO pelo satellite real (fim de pacote RF) e
+ * aceito como opcional nos demais. Pacotes truncados/corrompidos (menos
+ * campos que o formato do TEAM_ID) sao descartados.
  *
  * Retorna true se o parse foi bem sucedido.
  */
@@ -157,20 +163,16 @@ static bool parseSatellitePacket(
     int   &parachute,
     int   &rssi_placeholder
 ) {
-    // Marcador '#' final opcional (protecao contra truncamento)
+    // Marcador '#' final (protecao contra truncamento)
     String line = raw;
     if (line.endsWith("#")) {
         line = line.substring(0, line.length() - 1);
     }
 
-    // Valida numero de campos (22 campos = 21 virgulas)
+    // Conta campos para validar contra o formato do TEAM_ID
     int commaCount = 0;
     for (unsigned i = 0; i < line.length(); i++) {
         if (line[i] == ',') commaCount++;
-    }
-    if (commaCount < 21) {
-        Serial.println("[PARSE] Pacote incompleto: " + String(commaCount + 1) + " campos");
-        return false;
     }
 
     int start = 0;
@@ -187,29 +189,53 @@ static bool parseSatellitePacket(
     };
 
     String field;
-
     nextField(team_id);                // 0  TEAM_ID
+
+    bool isSat = (team_id == SAT_TEAM_ID);
+    int required = isSat ? 17 : 21;    // #213: 18 campos; outros: 22 campos
+    if (commaCount < required) {
+        Serial.println("[PARSE] Pacote incompleto: " + String(commaCount + 1)
+                       + " campos (esperado " + String(required + 1) + ")");
+        return false;
+    }
+
     nextField(field); millis_ts = field.toInt();   // 1  millis
     nextField(field); count = field.toInt();        // 2  count
     nextField(field); altp = field.toFloat();       // 3  altp
     nextField(field); temp = field.toFloat();       // 4  temp
     nextField(field); hum = field.toFloat();        // 5  umi (0 se sem sensor)
     nextField(field); press = field.toFloat();      // 6  p
-    nextField(field); gx = field.toFloat();         // 7  gx
-    nextField(field); gy = field.toFloat();         // 8  gy
-    nextField(field); gz = field.toFloat();         // 9  gz
-    nextField(field); ax = field.toFloat();         // 10 ax
-    nextField(field); ay = field.toFloat();         // 11 ay
-    nextField(field); az = field.toFloat();         // 12 az
-    nextField(field); vz = field.toFloat();         // 13 vz
-    nextField(field); max_alt = field.toFloat();    // 14 maxAltitude
-    nextField(field); state = field.toInt();        // 15 state
-    nextField(field); alt = field.toFloat();        // 16 alt (GPS)
-    nextField(field); lat = field.toFloat();        // 17 lat
-    nextField(field); lon = field.toFloat();        // 18 lon
-    nextField(field); sats = (uint8_t)field.toInt(); // 19 sat
-    nextField(field); parachute = field.toInt();    // 20 parachute (0/1)
-    nextField(field); rssi_placeholder = field.toInt(); // 21 rssi (placeholder)
+    nextField(field); gx = field.toFloat();         // 7  gx (sat: gp)
+    nextField(field); gy = field.toFloat();         // 8  gy (sat: gr)
+    nextField(field); gz = field.toFloat();         // 9  gz (sat: gy)
+    nextField(field); ax = field.toFloat();         // 10 ax (sat: ap)
+    nextField(field); ay = field.toFloat();         // 11 ay (sat: ar)
+    nextField(field); az = field.toFloat();         // 12 az (sat: ay)
+
+    if (isSat) {
+        // Satellite #213: 18 campos — alt GPS vem antes de lat/lon, sem
+        // vz/maxAltitude/state/parachute (zerados para o emissor v2.0)
+        nextField(field); alt = field.toFloat();        // 13 alt (GPS)
+        nextField(field); lat = field.toFloat();        // 14 lat
+        nextField(field); lon = field.toFloat();        // 15 lon
+        nextField(field); sats = (uint8_t)field.toInt(); // 16 sat
+        nextField(field); rssi_placeholder = field.toInt(); // 17 rssi (placeholder)
+        vz = 0.0f;
+        max_alt = 0.0f;
+        state = 0;
+        parachute = 0;
+    } else {
+        // Foguete #11/#51: formato v2.0 (22 campos)
+        nextField(field); vz = field.toFloat();         // 13 vz
+        nextField(field); max_alt = field.toFloat();    // 14 maxAltitude
+        nextField(field); state = field.toInt();        // 15 state
+        nextField(field); alt = field.toFloat();        // 16 alt (GPS)
+        nextField(field); lat = field.toFloat();        // 17 lat
+        nextField(field); lon = field.toFloat();        // 18 lon
+        nextField(field); sats = (uint8_t)field.toInt(); // 19 sat
+        nextField(field); parachute = field.toInt();    // 20 parachute (0/1)
+        nextField(field); rssi_placeholder = field.toInt(); // 21 rssi (placeholder)
+    }
 
     return true;
 }

@@ -18,10 +18,10 @@ static bool     pendingTx    = false;
 static uint32_t pendingTxAt  = 0;     // millis em que o TX deve ocorrer
 
 /**
- * @brief Faz parse do pacote do satellite (formato v2.0, 22 campos).
+ * @brief Faz parse do pacote do satellite (formato real Helike, 18 campos).
  *
- * Igual ao receiver: aceita marcador '#' final opcional (o satellite real
- * nao envia; o simulador envia) e so interessa quando TEAM_ID == SAT_TEAM_ID.
+ * Igual ao receiver: aceita marcador '#' final (o satellite real envia) e so
+ * interessa quando TEAM_ID == SAT_TEAM_ID. O count fica na posicao 2.
  *
  * @return true se e' pacote do satellite; preenche count.
  */
@@ -31,12 +31,14 @@ static bool parseSatellitePacket(const String &raw, uint32_t &count) {
         line = line.substring(0, line.length() - 1);
     }
 
-    // 22 campos = 21 virgulas
+    // Satellite #213: 18 campos = 17 virgulas (Helike transmite sem
+    // vz/maxAltitude/state/parachute; foguetes #11/#51 usam 22 campos e
+    // tambem sao aceitos — basta TEAM_ID e count na posicao 2)
     int commaCount = 0;
     for (unsigned i = 0; i < line.length(); i++) {
         if (line[i] == ',') commaCount++;
     }
-    if (commaCount < 21) return false;
+    if (commaCount < 17) return false;
 
     int start = 0;
     auto nextField = [&](String &out) {

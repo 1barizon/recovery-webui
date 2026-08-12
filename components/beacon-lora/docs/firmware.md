@@ -17,7 +17,7 @@ permite a qualquer momento promover um beacon a receiver e vice-versa.
 ```
                 LoRa 915 MHz                          LoRa 915 MHz
 Satellite (#213) ────────────────► Beacon ───────────────────────────► Receiver
-  (5 Hz, 22 campos)               (escuta + mede RSSI)   (report #Bx,    │
+  (5 Hz, 18 campos)               (escuta + mede RSSI)   (report #Bx,    │
                                                    11 campos GPS+RSSI)   │
                                                               │ trilateração
                                                               ▼
@@ -34,7 +34,7 @@ satellite, agenda um report com jitter aleatório anti-colisão e o transmite.
 loop:
   1. gpsProcess()                     — alimenta o parser GPS local
   2. loraAvailable() / loraReceive()  — escuta o satellite
-  3. parseSatellitePacket()           — valida (22 campos) e confere TEAM_ID == #213
+  3. parseSatellitePacket()           — valida (18 campos) e confere TEAM_ID == #213
   4. grava sat_count / sat_millis / RSSI do pacote ouvido
   5. scheduleTx()                     — agenda TX com jitter (15-120 ms) e
                                         respeitando REPORT_MIN_INTERVAL_MS

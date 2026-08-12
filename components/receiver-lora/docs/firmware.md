@@ -30,7 +30,7 @@ Receiver LoRa
 ```
 ┌──────────────┐     LoRa 915MHz     ┌──────────────┐     USB Serial     ┌──────────────┐
 │   Satellite  │ ──────────────────> │   Receiver   │ ─────────────────> │ Recovery     │
-│   (#213 TX)  │  pacote 22 campos   │   (RX)       │  pacote v2.0      │ WebUI        │
+│   (#213 TX)  │  pacote 18 campos   │   (RX)       │  pacote v2.0      │ WebUI        │
 └──────────────┘                     └──────────────┘                    └──────────────┘
        ▲                                     ▲  │
        │ LoRa                                │  │ report #Bx (11 campos)
@@ -110,14 +110,25 @@ retransmissão direta; seus pacotes também não alimentam o cesto.
 
 ## Formato dos Pacotes
 
-### Satellite -> Receiver (22 campos, via LoRa)
+### Satellite (#213, Helike) -> Receiver (18 campos, via LoRa)
+
+```
+#213,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,alt,lat,lon,sat,rssi#
+```
+
+`gp/gr/gy` = giroscopio, `ap/ar/ay` = acelerometro. O satelite **nao envia**
+`vz`, `maxAltitude`, `state` e `parachute` (o receiver emite 0 nesses campos
+no formato v2.0) — e nem `hora`/`data` (economia de bytes, o receiver
+preenche com GPS local). O `#` final marca o fim de pacote RF.
+
+### Foguetes #11/#51 (flight-computer v2.0) -> Receiver (22 campos, via LoRa)
 
 ```
 TEAM_ID,millis,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,maxAltitude,state,alt,lat,lon,sat,parachute,rssi
 ```
 
-Campos `hora` e `data` sao omitidos do radio (economia de bytes). Campo `rssi`
-e placeholder (-1).
+O parser aceita os dois formatos e roteia por TEAM_ID: `#213` → cesto de
+trilateração; outro TEAM_ID → retransmissão direta.
 
 ### Beacon -> Receiver (report #Bx, 11 campos, via LoRa)
 
@@ -151,7 +162,7 @@ o `#213`, a lat/lon emitida é a corrigida e o `count` permanece o do pacote.
 | `TRILAT_MIN_LISTENERS`  | 3       | Ouvintes minimos p/ fechar o cesto               |
 | `TRILAT_BASKET_WAIT_MS` | 900     | Janela de coleta de reports (ms)                 |
 | `TRILAT_MAX_RESIDUAL_M` | 1500    | Residuo LSQ maximo aceito (m)                    |
-| `TRILAT_TX_POWER_DBM`   | 17      | Potencia TX do satellite (dBm)                   |
+| `TRILAT_TX_POWER_DBM`   | 20      | Potencia TX do satellite Helike (dBm)           |
 | `TRILAT_PATH_LOSS_N`    | 2.0     | Expoente de perda de percurso                    |
 | `TRILAT_ALT_CORRECTION` | 1       | Projeta slant no chao via Pitagoras              |
 | `TRILAT_MAX_BEACONS`    | 8       | Beacons rastreados (B1..B8)                      |

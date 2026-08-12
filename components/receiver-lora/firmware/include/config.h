@@ -49,9 +49,9 @@
 
 // Link budget da trilateracao (RSSI -> distancia):
 //   r = 10 ^ ((TX_POWER - RSSI) / (10 * n))
-// TX_POWER = potencia de transmissao do satellite (17 dBm no flight-computer)
+// TX_POWER = potencia de transmissao do satellite (20 dBm no Helike config.h)
 // n        = expoente de perda de percurso (2.0 = espaco livre)
-#define TRILAT_TX_POWER_DBM         17
+#define TRILAT_TX_POWER_DBM         20
 #define TRILAT_PATH_LOSS_N          2.0f
 
 // Correcao de altitude (Pitagoras): a distancia derivada do RSSI e a

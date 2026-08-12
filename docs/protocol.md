@@ -62,11 +62,25 @@ Cada pacote e uma linha de texto em formato CSV terminada com `\n`.
 TEAM_ID,millis,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,maxAltitude,state,hora,data,alt,lat,lon,sat,parachute,rssi
 ```
 
-**Formato do satelite (22 campos) — transmissor LoRa:**
+**Formato do satelite #213 (Helike, 18 campos) — transmissor LoRa:**
+
+```
+#213,millis,count,altp,temp,umi,p,gp,gr,gy,ap,ar,ay,alt,lat,lon,sat,rssi#
+```
+
+O satelite usa nomes `gp/gr/gy` (giroscopio X/Y/Z) e `ap/ar/ay` (acelerometro
+X/Y/Z) e **nao transmite** `vz`, `maxAltitude`, `state` nem `parachute` — o
+receiver preenche esses campos com zero ao emitir o formato v2.0 (24 campos)
+para o backend. O `#` final marca o fim de pacote RF.
+
+**Formato dos foguetes #11/#51 (flight-computer v2.0, 22 campos) — LoRa:**
 
 ```
 TEAM_ID,millis,count,altp,temp,umi,p,gx,gy,gz,ax,ay,az,vz,maxAltitude,state,alt,lat,lon,sat,parachute,rssi
 ```
+
+O receiver aceita os dois formatos e roteia por TEAM_ID: `#213` → cesto de
+trilateração; `#11`/`#51` → retransmissão direta.
 
 **Formato do report de beacon (11 campos) — beacon para receiver:**
 
@@ -422,7 +436,7 @@ r = 10 ^ ((TX_POWER - RSSI) / (10 * n))     [slant range, m]
 d = sqrt(r² - h²)                           [projeção no chão, h = altp do pacote]
 ```
 
-- `TX_POWER` = 17 dBm (potência do satellite)
+- `TX_POWER` = 20 dBm (potência do satellite Helike — `LORA_TX_POWER` no config.h)
 - `n` = 2.0 (espaço livre; ajustável no receiver em `TRILAT_PATH_LOSS_N`)
 
 ### Regras de validação
