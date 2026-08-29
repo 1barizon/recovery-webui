@@ -56,16 +56,23 @@ int loraLastRSSI() {
     return LoRa.packetRssi();
 }
 
+// Cache do tamanho do pacote detectado em loraAvailable(). LoRa.parsePacket()
+// so pode ser chamado UMA vez por pacote — a segunda chamada retorna 0 porque
+// as flags de IRQ ja foram limpas. loraReceive() consome esse cache.
+static int _pendingSize = 0;
+
 bool loraAvailable() {
     if (!_loraReady) return false;
-    return LoRa.parsePacket() > 0;
+    _pendingSize = LoRa.parsePacket();
+    return _pendingSize > 0;
 }
 
 String loraReceive() {
     if (!_loraReady) return "";
+    if (_pendingSize <= 0) return "";
 
-    int packetSize = LoRa.parsePacket();
-    if (packetSize <= 0) return "";
+    int packetSize = _pendingSize;
+    _pendingSize = 0;
 
     String payload;
     payload.reserve(packetSize);
