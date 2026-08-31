@@ -21,17 +21,17 @@
           <h1>Serra Rocketry</h1>
         </div>
         <div class="nav-links">
-          {%- if request.path == '/satellite' -%}
-            <a href="/" class="nav-button">Foguete</a>
-          {%- else -%}
-            <a href="/satellite" class="nav-button">Satélite</a>
-          {%- endif -%}
+          <a href="/" class="nav-button">Foguete</a>
+          <a href="/satellite" class="nav-button">Satélite</a>
+          <a href="/visualizador3d" class="nav-button">3D</a>
         </div>
       </nav>
     </header>
     {% block content %} {% endblock %}
-    <script src="static/js/jquery-3.7.1.js"></script>
-    <script src="static/js/app.js"></script>
-    <script src="static/js/socket.io.js"></script>
+    {% block scripts %}
+      <script src="static/js/jquery-3.7.1.js"></script>
+      <script src="static/js/app.js"></script>
+      <script src="static/js/socket.io.js"></script>
+    {% endblock %}
   </body>
 </html>

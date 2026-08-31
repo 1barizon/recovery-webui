@@ -9,6 +9,7 @@ O Recovery WebUI é uma aplicação Flask que fornece uma interface web para mon
 ### Funcionalidades Principais
 
 - 🗺️ **Visualização em Mapa Interativo**: Mapa com múltiplas camadas (Google Satélite, Google Streets, OpenStreetMap)
+- 🧊 **Visualizador 3D de Orientação**: Modelo 3D (cubo para satélite, foguete para foguetes) que gira conforme os dados IMU (giroscópio + acelerômetro)
 - 📡 **Rastreamento em Tempo Real**: Comunicação via WebSocket para atualizações instantâneas
 - 📊 **Registro de Dados**: Armazenamento automático de telemetria em formato CSV
 - 🚀 **Suporte Dual**: Rastreamento simultâneo de foguete (#100) e satélite (#261)
@@ -83,6 +84,7 @@ Selecione a porta serial (número): 1
 5. Acesse as diferentes visualizações:
    - `/` - Dados do foguete principal
    - `/satellite` - Dados do satélite
+   - `/visualizador3d` - Orientação 3D (cubo/foguete)
 
 ## 📁 Estrutura do Projeto
 

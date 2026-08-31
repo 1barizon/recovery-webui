@@ -107,6 +107,51 @@ footer {
   width: 100%;
 }
 
+#cube3d {
+  height: 450px;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#cubeStatus {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #232333;
+  font-size: 0.95rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.chart-box {
+  background-color: #232333;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.chart-box h3 {
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  color: #cbcbe2;
+  font-weight: 600;
+}
+
+.chart-box .chart-wrap {
+  position: relative;
+  height: 260px;
+}
+
 table {
   width: 100%;
   border: none;

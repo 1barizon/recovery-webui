@@ -46,6 +46,13 @@ def _rocket_event(fields: dict, now: str) -> dict:
         "satelites": fields["sat"],
         "rssi": fields["rssi"],
         "pqd": fields["parachute"],
+        "gx": fields["gx"],
+        "gy": fields["gy"],
+        "gz": fields["gz"],
+        "ax": fields["ax"],
+        "ay": fields["ay"],
+        "az": fields["az"],
+        "vz": fields["vz"],
         "time": now,
     }
 
@@ -60,6 +67,13 @@ def _sat_event(fields: dict, now: str) -> dict:
         "umidade": fields["umi"],
         "pressao": fields["press"],
         "rssi": fields["rssi"],
+        "gx": fields["gx"],
+        "gy": fields["gy"],
+        "gz": fields["gz"],
+        "ax": fields["ax"],
+        "ay": fields["ay"],
+        "az": fields["az"],
+        "vz": fields["vz"],
         "time": now,
     }
 

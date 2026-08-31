@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main>
+  <div class="card">
+    <div id="cube3d"></div>
+    <div id="cubeStatus">
+      <span id="deviceLabel">Aguardando dados...</span>
+      <span id="angleLabel">roll: 0.0° · pitch: 0.0° · yaw: 0.0°</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="charts-grid">
+      <div class="chart-box">
+        <h3>Aceleração</h3>
+        <div class="chart-wrap"><canvas id="accelChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3>Velocidade</h3>
+        <div class="chart-wrap"><canvas id="velChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3>Altitude</h3>
+        <div class="chart-wrap"><canvas id="altChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+  <script src="static/js/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="static/js/three/three.min.js"></script>
+  <script src="static/js/three/OrbitControls.js"></script>
+  <script src="static/js/viewer3d.js"></script>
+{% endblock %}

@@ -7,11 +7,14 @@ Modos de operação:
   --debug       Ativa logs detalhados
   --cli         Modo terminal interativo (sem Flask/SocketIO)
   --simulation  Usa FakeCom (dados sinteticos em vez de serial real)
+  --flight [ARQ] Usa um voo simulado (CSV) da pasta simulated_flights;
+                 sem ARQ usa o primeiro CSV disponivel
 
 Uso:
   python src/app.py                          # Modo Flask (padrao)
   python src/app.py --cli                    # Modo terminal interativo
   python src/app.py --cli --simulation       # CLI com dados sinteticos
+  python src/app.py --simulation --flight log_voo_rocketpy.csv
   python src/app.py --cli --simulation --debug  # CLI + sintetico + verbose
 """
 
@@ -29,6 +32,7 @@ from flask_socketio import SocketIO
 from simple_term_menu import TerminalMenu
 
 from modules import BaseCom, FakeCom
+from modules.FakeCOM import load_simulated_flight, resolve_flight_path
 from receiver import Receiver, CSV_HEADER, parse_packet
 
 
@@ -39,16 +43,23 @@ from receiver import Receiver, CSV_HEADER, parse_packet
 debug_mode = False
 simulation_mode = False
 cli_mode = False
+flight_mode = False
+flight_file: Optional[str] = None
 
-for arg in sys.argv[1:]:
+_args = sys.argv[1:]
+_i = 0
+while _i < len(_args):
+    arg = _args[_i]
     if arg == "--help":
         print(f"Uso: python {sys.argv[0]} [opcoes]")
         print()
         print("Opcoes:")
-        print("  --help        Exibe esta ajuda")
-        print("  --debug       Ativa logs detalhados (DEBUG)")
-        print("  --cli         Modo terminal interativo (sem web)")
-        print("  --simulation  Usa dados sinteticos (FakeCom)")
+        print("  --help          Exibe esta ajuda")
+        print("  --debug         Ativa logs detalhados (DEBUG)")
+        print("  --cli           Modo terminal interativo (sem web)")
+        print("  --simulation    Usa dados sinteticos (FakeCom)")
+        print("  --flight [ARQ]  Simula um voo (CSV) de simulated_flights;")
+        print("                  sem ARQ usa o primeiro CSV da pasta")
         sys.exit(0)
     elif arg == "--debug":
         debug_mode = True
@@ -56,6 +67,13 @@ for arg in sys.argv[1:]:
         cli_mode = True
     elif arg == "--simulation":
         simulation_mode = True
+    elif arg == "--flight":
+        flight_mode = True
+        simulation_mode = True
+        if _i + 1 < len(_args) and not _args[_i + 1].startswith("--"):
+            flight_file = _args[_i + 1]
+            _i += 1
+    _i += 1
 
 # ══════════════════════════════════════════════════════════════════════════
 # Logging estruturado
@@ -100,6 +118,8 @@ if debug_mode:
     main_logger.debug("modo debug ativado")
 if simulation_mode:
     main_logger.debug("modo simulacao ativado (FakeCom)")
+if flight_mode:
+    main_logger.debug("modo voo simulado ativado (CSV)")
 if cli_mode:
     main_logger.debug("modo CLI ativado")
 
@@ -107,7 +127,16 @@ if cli_mode:
 # Interface serial + Receiver
 # ══════════════════════════════════════════════════════════════════════════
 
-if simulation_mode:
+if flight_mode:
+    try:
+        flight_path = resolve_flight_path(flight_file)
+        lines = load_simulated_flight(flight_path)
+    except (FileNotFoundError, ValueError) as err:
+        main_logger.error(str(err))
+        sys.exit(1)
+    com: BaseCom = FakeCom(antenna_logger, lines=lines)
+    main_logger.info(f"voo simulado carregado -> {flight_path} ({len(lines)} pacotes)")
+elif simulation_mode:
     com: BaseCom = FakeCom(antenna_logger)
 else:
     if BaseCom is None:
@@ -148,6 +177,11 @@ if not cli_mode:
     @app.route("/satellite")
     def satellite():
         return render_template("satellite.html")
+
+
+    @app.route("/visualizador3d")
+    def visualizador3d():
+        return render_template("viewer3d.html")
 
 
     @socketio.on("connect")
@@ -364,4 +398,10 @@ if __name__ == "__main__":
         while next_state:
             next_state = next_state()
     else:
-        socketio.run(app, host="0.0.0.0", port=5000, debug=debug_mode)
+        socketio.run(
+            app,
+            host="0.0.0.0",
+            port=5000,
+            debug=debug_mode,
+            allow_unsafe_werkzeug=True,
+        )

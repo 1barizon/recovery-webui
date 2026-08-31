@@ -118,13 +118,18 @@ web/
 ├── templates/             # Templates Jinja2
 │   ├── base.html         # Template base
 │   ├── index.html        # Pagina do foguete (#11, #51)
-│   └── satellite.html    # Pagina do satelite (#213)
+│   ├── satellite.html    # Pagina do satelite (#213)
+│   └── viewer3d.html     # Visualizador 3D de orientacao (cubo/foguete)
 │
 ├── static/               # Arquivos estaticos
 │   ├── css/
 │   │   └── app.css      # Estilos customizados
 │   ├── js/
-│   │   └── app.js       # Lógica do cliente
+│   │   ├── app.js       # Lógica do cliente (mapa + tabelas)
+│   │   ├── viewer3d.js  # Cena 3D (Three.js) + rotacao via IMU
+│   │   └── three/       # Three.js (bundle local, offline)
+│   │       ├── three.min.js
+│   │       └── OrbitControls.js
 │   └── logs/
 │       └── log.csv      # Logs de telemetria
 ```

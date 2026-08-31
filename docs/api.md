@@ -75,6 +75,25 @@ Content-Type: text/html
 
 ---
 
+### GET /visualizador3d
+
+Renderiza a página de visualização 3D da orientação (cubo para satélite, foguete para foguetes).
+
+**Request:**
+
+```http
+GET /visualizador3d HTTP/1.1
+Host: localhost:5000
+```
+
+**Descrição:**
+
+- Modelo 3D (Three.js) que gira conforme os dados IMU recebidos
+- Cubo quando o último pacote for do satélite (`updateSat`); foguete quando for de foguete (`updateRocket`)
+- Inclinação (roll/pitch) calculada a partir do acelerômetro; giro (yaw) a partir do giroscópio
+
+---
+
 ## WebSocket Events
 
 O sistema usa Socket.IO para comunicação em tempo real entre servidor e clientes.
@@ -140,7 +159,13 @@ Evento emitido quando novos dados do foguete são recebidos (TEAM_ID #100).
     "altura": "150.5",           // string - Altitude barométrica em metros
     "satelites": "8",            // string - Número de satélites GPS
     "rssi": "-75",               // string - RSSI do sinal LoRa em dBm
-
+    "pqd": "0",                  // string - Estado do paraquedas (0/1)
+    "gx": "0.5",                 // string - Giroscópio X (°/s)
+    "gy": "1.2",                 // string - Giroscópio Y (°/s)
+    "gz": "-0.3",                // string - Giroscópio Z (°/s)
+    "ax": "0.1",                 // string - Acelerômetro X (m/s²)
+    "ay": "0.2",                 // string - Acelerômetro Y (m/s²)
+    "az": "9.8",                 // string - Acelerômetro Z (m/s²)
     "time": "2025-01-20 14:30:45" // string - Timestamp servidor
 }
 ```
@@ -179,6 +204,12 @@ Evento emitido quando novos dados do satélite são recebidos (TEAM_ID #261).
     "umidade": "45.2",           // string - Umidade relativa em %
     "pressao": "1013.25",        // string - Pressão atmosférica em hPa
     "rssi": "-75",               // string - RSSI do sinal LoRa em dBm
+    "gx": "0.5",                 // string - Giroscópio X (°/s)
+    "gy": "1.2",                 // string - Giroscópio Y (°/s)
+    "gz": "-0.3",                // string - Giroscópio Z (°/s)
+    "ax": "0.1",                 // string - Acelerômetro X (m/s²)
+    "ay": "0.2",                 // string - Acelerômetro Y (m/s²)
+    "az": "9.8",                 // string - Acelerômetro Z (m/s²)
     "time": "2025-01-20 14:30:45" // string - Timestamp servidor
 }
 ```
